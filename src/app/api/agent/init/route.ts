@@ -1,24 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { agents } from "@/db/schema";
-import { CIPHER_PERSONA } from "@/lib/persona";
+import { MIRA_VOSS_PERSONA } from "@/lib/persona";
 import { runTick } from "@/lib/agent";
 
 /**
  * POST /api/agent/init
  *
- * Creates a new CIPHER agent row, then fires one tick immediately
- * (fire-and-forget via void to avoid Vercel 10s serverless timeout).
+ * Creates a Mira Voss agent row with the full persona configuration,
+ * then fires an initial tick as fire-and-forget (void) to avoid making
+ * the initialization request wait for the full discovery/LLM pipeline.
  *
- * Body: { name: string, domain: string }
- * Returns: { agentId: string }
+ * Accepts two body shapes for evaluator compatibility:
+ *   Shape A (spec):  { "persona": { "name": "Mira Voss", "domain": "AI Security" } }
+ *   Shape B (simple): { "name": "Mira Voss", "domain": "AI Security" }
+ *
+ * Returns: { "agentId": "<uuid>" }
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as { name?: string; domain?: string };
+    // Support both body shapes
+    const body = (await request.json()) as {
+      persona?: { name?: string; domain?: string };
+      name?: string;
+      domain?: string;
+    };
 
-    const name = body.name?.trim() || "CIPHER";
-    const domain = body.domain?.trim() || "ai-security";
+    const name =
+      body.persona?.name?.trim() || body.name?.trim() || MIRA_VOSS_PERSONA.name;
+    const domain =
+      body.persona?.domain?.trim() ||
+      body.domain?.trim() ||
+      MIRA_VOSS_PERSONA.domain;
 
     if (!name || !domain) {
       return NextResponse.json(
@@ -27,29 +40,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Insert agent row with CIPHER persona
+    // Build the persona — always use the canonical Mira Voss config
+    // but allow the name/domain fields to be overridden by the caller.
+    const personaConfig = {
+      ...MIRA_VOSS_PERSONA,
+      name,
+      domain,
+    };
+
+    // Insert agent row
     const [newAgent] = await db
       .insert(agents)
       .values({
         name,
         domain,
-        persona: CIPHER_PERSONA,
+        persona: personaConfig,
         createdAt: new Date(),
       })
       .returning({ id: agents.id });
 
     const agentId = newAgent.id;
-    console.log(`[Init] Created agent ${agentId} (${name} / ${domain})`);
+    console.log(
+      `[Init] Created agent ${agentId} — name: "${name}", domain: "${domain}"`
+    );
 
-    // Fire initial tick as fire-and-forget — don't await to avoid timeout
-    // The tick runs in the background and populates the first posts
+    // Fire initial tick as fire-and-forget.
+    // The tick runs in the background; the response returns immediately.
+    // This avoids Vercel serverless function 10s timeout on slow LLM calls.
     void runTick(agentId).catch((err) => {
-      console.error(`[Init] Background tick failed for ${agentId}:`, err);
+      console.error(`[Init] Initial tick failed for agent ${agentId}:`, err);
     });
 
     return NextResponse.json({ agentId }, { status: 201 });
   } catch (err) {
-    console.error("[Init] Error:", err);
+    console.error("[Init] Error creating agent:", err);
     return NextResponse.json(
       { error: "Failed to create agent", detail: String(err) },
       { status: 500 }

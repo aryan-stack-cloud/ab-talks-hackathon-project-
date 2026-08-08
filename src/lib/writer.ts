@@ -1,9 +1,9 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { db } from "@/db";
 import { posts } from "@/db/schema";
 import type { Topic } from "./discovery";
 import type { PersonaConfig } from "./persona";
 import { personaSystemPrompt } from "./persona";
+import { POST_SCHEMA, generateStructured, type PostOutput } from "./gemini";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -13,18 +13,43 @@ export interface GeneratedPost {
   sources: string[];
 }
 
-// ─── Anthropic client (re-use singleton pattern) ─────────────────────────────
+// ─── Validation ───────────────────────────────────────────────────────────────
 
-let _client: Anthropic | null = null;
-
-function getClient(): Anthropic {
-  if (!_client) {
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY environment variable is not set");
-    }
-    _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+function validatePostOutput(raw: unknown, sourceUrl: string): PostOutput {
+  if (!raw || typeof raw !== "object") {
+    throw new Error("Gemini returned a non-object post response");
   }
-  return _client;
+  const obj = raw as Record<string, unknown>;
+
+  if (typeof obj.text !== "string" || obj.text.trim().length < 50) {
+    throw new Error(
+      `Post text is missing or too short (${String(obj.text ?? "").length} chars — need ≥50)`
+    );
+  }
+  if (typeof obj.rationale !== "string" || obj.rationale.trim().length === 0) {
+    throw new Error("Post rationale is missing or empty");
+  }
+
+  // Sources: use provided array, filtering non-URL strings; fall back to known URL
+  let sources: string[];
+  if (Array.isArray(obj.sources) && obj.sources.length > 0) {
+    sources = (obj.sources as unknown[])
+      .filter((s): s is string => typeof s === "string" && s.startsWith("http"))
+      .slice(0, 5);
+  } else {
+    sources = [];
+  }
+
+  // Always ensure the canonical source URL is present
+  if (!sources.includes(sourceUrl)) {
+    sources = [sourceUrl, ...sources];
+  }
+
+  return {
+    text: obj.text.trim(),
+    rationale: obj.rationale.trim(),
+    sources,
+  };
 }
 
 // ─── Post generation ──────────────────────────────────────────────────────────
@@ -32,100 +57,99 @@ function getClient(): Anthropic {
 /**
  * Generate a post for an accepted topic and insert it into the posts table.
  *
- * The recent rejections are passed as context so CIPHER can acknowledge
- * why it chose this topic over alternatives — making the rationale richer.
+ * Uses Gemini structured JSON output. The output is validated before any
+ * DB insert — malformed posts are never persisted.
  *
- * @param candidate        - The topic to write about (editorial decision: "publish")
- * @param persona          - CIPHER's persona config
- * @param agentId          - UUID of the agent writing the post
- * @param recentRejections - Other topics evaluated this tick that were rejected
- * @returns The generated post metadata (text, rationale, sources)
+ * @param candidate         The topic to write about (editorially accepted)
+ * @param persona           Mira Voss's full persona config (from DB)
+ * @param agentId           UUID of the writing agent
+ * @param judgment          The editorial judgment (score + reason, used for context)
+ * @param recentRejections  Other topics judged this tick that were rejected
+ * @param recentPostSummaries Short summaries of recently published posts (for continuity)
  */
 export async function generatePost(
   candidate: Topic,
   persona: PersonaConfig,
   agentId: string,
-  recentRejections: Topic[] = []
+  judgment: { score: number; reason: string },
+  recentRejections: Topic[] = [],
+  recentPostSummaries: string[] = [],
+  candidateIndex?: number
 ): Promise<GeneratedPost> {
-  const client = getClient();
-
   const rejectionsContext =
     recentRejections.length > 0
-      ? `\n\nOTHER TOPICS EVALUATED AND REJECTED THIS CYCLE:\n${recentRejections
-          .map((r, i) => `${i + 1}. "${r.title}" (${r.source}) — rejected`)
-          .join("\n")}\nYou may reference why you chose this topic over those alternatives if it strengthens the rationale.`
+      ? `\nTOPICS EVALUATED AND REJECTED THIS CYCLE (weaker candidates):\n${recentRejections
+          .slice(0, 5)
+          .map((r, i) => `${i + 1}. "${r.title}" (${r.source})`)
+          .join("\n")}\n`
       : "";
 
-  const systemPrompt = `${personaSystemPrompt(persona)}
+  const continuityContext =
+    recentPostSummaries.length > 0
+      ? `\nRECENT PUBLISHED POSTS (avoid repeating these angles):\n${recentPostSummaries
+          .map((s, i) => `${i + 1}. ${s}`)
+          .join("\n")}\n`
+      : "";
 
-You are now writing a post as ${persona.name}. This post has already passed your editorial judgment and will be published.
+  const systemInstruction = `${personaSystemPrompt(persona)}
 
-WRITING CONSTRAINTS:
-- Maximum 280 words — count carefully
-- Write in first person as ${persona.name}
-- Every factual claim must cite its source inline
-- No hashtags, no emoji, no bullet lists in the post body
-- End with a bare source URL on its own line if you cite an external source
+You are now writing a research post as ${persona.name}.
 
-Respond ONLY with valid JSON in exactly this shape:
-{
-  "text": "<the full post text, max 280 words>",
-  "rationale": "<2-3 sentences explaining why you chose to write about this and what angle you took>",
-  "sources": ["<url1>", "<url2>"]
-}
+This topic passed editorial review with a score of ${judgment.score}/100.
+Selection reason: ${judgment.reason}
 
-Do not include any text outside the JSON object.`;
+WRITING REQUIREMENTS:
+- Write in ${persona.name}'s voice — technically precise, slightly skeptical, analytical
+- Maximum 300 words; prefer 150–250 words
+- No hashtags, no emojis, no bullet-point lists in the post body — prose only
+- Explain why this topic matters NOW with a concrete technical angle
+- Cite only the source URLs provided in the input — never fabricate URLs
+- Distinguish your interpretation from what the source actually says
+- Do not begin with "I'm excited", "This is huge", or similar openers
+- Avoid passive voice where active is possible
+- The post must stand alone: a reader who has not seen the source should understand the significance
+${rejectionsContext}${continuityContext}`;
 
-  const userPrompt = `Write a post about this topic:
+  const userContent = `Write a post as ${persona.name} about this topic:
 
 Title: ${candidate.title}
-URL: ${candidate.url}
 Source: ${candidate.source}
 Published: ${candidate.publishedAt}
+URL: ${candidate.url}
 Summary: ${candidate.summary}
-${rejectionsContext}
 
-Write the post now.`;
+Use only the URL above as your source. Explain the security significance concretely. Write the post now.`;
 
   let generated: GeneratedPost;
 
   try {
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-5",
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
+    const idxLabel = typeof candidateIndex === "number" ? candidateIndex + 1 : "";
+    console.log(`[Writer] Generating post for candidate ${idxLabel} ("${candidate.title.slice(0, 50)}")`.trim());
+
+    const raw = await generateStructured<PostOutput>({
+      systemInstruction,
+      userContent,
+      schema: POST_SCHEMA,
+      temperature: 0.65, // Some creativity for a distinct, non-robotic voice
     });
 
-    const content = response.content[0];
-    if (content.type !== "text") {
-      throw new Error("Unexpected non-text response from Anthropic");
-    }
-
-    const jsonText = content.text
-      .trim()
-      .replace(/^```json\s*/i, "")
-      .replace(/```\s*$/, "");
-
-    const parsed = JSON.parse(jsonText) as {
-      text: string;
-      rationale: string;
-      sources: string[];
-    };
+    const validated = validatePostOutput(raw, candidate.url);
 
     generated = {
-      text: parsed.text ?? "",
-      rationale: parsed.rationale ?? "",
-      sources: Array.isArray(parsed.sources) ? parsed.sources : [candidate.url],
+      text: validated.text,
+      rationale: validated.rationale,
+      sources: validated.sources,
     };
-
-    // Ensure the source URL is always in the sources list
-    if (!generated.sources.includes(candidate.url)) {
-      generated.sources.unshift(candidate.url);
-    }
   } catch (err) {
-    console.error(`[Writer] Post generation failed for "${candidate.title}":`, err);
-    throw err; // Re-throw — caller handles this gracefully
+    console.error(
+      `[Writer] Post generation failed for "${candidate.title.slice(0, 70)}":`,
+      err
+    );
+    // Re-throw — the tick caller catches this, counts the error, and continues.
+    // A malformed post is NEVER inserted into the database.
+    throw new Error(
+      `Post generation failed: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
 
   // ── Insert into posts table ───────────────────────────────────────────────
@@ -138,11 +162,12 @@ Write the post now.`;
       createdAt: new Date(),
     });
 
+    const wordCount = generated.text.split(/\s+/).length;
     console.log(
-      `[Writer] Post published — "${candidate.title}" (${generated.text.split(" ").length} words)`
+      `[Writer] Post inserted — "${candidate.title.slice(0, 60)}" (${wordCount} words)`
     );
   } catch (dbErr) {
-    console.error("[Writer] Failed to insert post into DB:", dbErr);
+    console.error("[Writer] DB insert failed:", dbErr);
     throw dbErr;
   }
 

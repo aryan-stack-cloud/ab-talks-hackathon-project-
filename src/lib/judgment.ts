@@ -1,137 +1,215 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { db } from "@/db";
 import { seenTopics } from "@/db/schema";
 import type { Topic } from "./discovery";
 import type { PersonaConfig } from "./persona";
-import { personaSystemPrompt } from "./persona";
+import { personaSystemPrompt, rejectRulesPrompt } from "./persona";
+import {
+  BATCH_JUDGMENT_SCHEMA,
+  generateStructured,
+  type BatchJudgmentOutput,
+  type BatchCandidateDecision,
+} from "./gemini";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type JudgmentDecision = "publish" | "reject";
 
-export interface JudgmentResult {
+export interface EvaluatedCandidate {
+  candidate: Topic;
   decision: JudgmentDecision;
+  score: number;
   reason: string;
 }
 
-// ─── Anthropic client ─────────────────────────────────────────────────────────
-
-let _client: Anthropic | null = null;
-
-function getClient(): Anthropic {
-  if (!_client) {
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY environment variable is not set");
-    }
-    _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  }
-  return _client;
+export interface BatchJudgmentResult {
+  status: "success" | "error";
+  evaluated: EvaluatedCandidate[];
+  error?: string;
 }
 
-// ─── Judgment ─────────────────────────────────────────────────────────────────
+// ─── Validation ───────────────────────────────────────────────────────────────
 
-/**
- * Ask CIPHER to judge whether a candidate topic is worth publishing.
- *
- * Every judgment — publish or reject — is logged to seen_topics so the
- * agent never re-evaluates the same topic. The reason is stored as rationale.
- *
- * @param candidate - The topic to evaluate
- * @param persona   - CIPHER's persona config (stances + reject_if rules)
- * @param agentId   - UUID of the agent making the judgment
- * @returns JudgmentResult with decision and reason
- */
-export async function judgeTopic(
-  candidate: Topic,
-  persona: PersonaConfig,
-  agentId: string
-): Promise<JudgmentResult> {
-  const client = getClient();
-
-  const systemPrompt = `${personaSystemPrompt(persona)}
-
-You are now acting as an editorial filter. Your job is to decide whether a given topic is worth writing about as ${persona.name}.
-
-REJECTION CRITERIA — reject if ANY of these are true:
-${persona.reject_if.map((r, i) => `${i + 1}. ${r}`).join("\n")}
-
-Respond ONLY with valid JSON in exactly this shape:
-{"decision": "publish" | "reject", "reason": "<one concise sentence explaining why>"}
-
-Do not include any text outside the JSON object.`;
-
-  const userPrompt = `Evaluate this topic:
-
-Title: ${candidate.title}
-URL: ${candidate.url}
-Source: ${candidate.source}
-Published: ${candidate.publishedAt}
-Summary: ${candidate.summary}
-
-Should ${persona.name} write about this? Respond with the JSON judgment.`;
-
-  let result: JudgmentResult;
-
-  try {
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-5",
-      max_tokens: 256,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
-    });
-
-    const content = response.content[0];
-    if (content.type !== "text") {
-      throw new Error("Unexpected non-text response from Anthropic");
-    }
-
-    // Parse the JSON response — be defensive about extra whitespace/markdown
-    const jsonText = content.text
-      .trim()
-      .replace(/^```json\s*/i, "")
-      .replace(/```\s*$/, "");
-
-    const parsed = JSON.parse(jsonText) as { decision: string; reason: string };
-
-    if (parsed.decision !== "publish" && parsed.decision !== "reject") {
-      throw new Error(`Invalid decision value: ${parsed.decision}`);
-    }
-
-    result = {
-      decision: parsed.decision as JudgmentDecision,
-      reason: parsed.reason ?? "No reason provided",
-    };
-  } catch (err) {
-    console.error(`[Judgment] Failed for "${candidate.title}":`, err);
-    // On API failure, reject conservatively — don't spam the API on retry
-    result = {
-      decision: "reject",
-      reason: `Judgment failed due to API error: ${String(err).slice(0, 100)}`,
-    };
+function validateBatchOutput(
+  raw: unknown,
+  candidateCount: number
+): BatchJudgmentOutput {
+  if (!raw || typeof raw !== "object") {
+    throw new Error("Gemini returned a non-object batch judgment response");
+  }
+  const obj = raw as Record<string, unknown>;
+  if (!Array.isArray(obj.decisions)) {
+    throw new Error("Gemini output missing 'decisions' array");
   }
 
-  // ── Log decision to seen_topics (always, regardless of decision) ──────────
-  try {
-    await db.insert(seenTopics).values({
-      agentId,
-      topicKey: candidate.topicKey,
-      title: candidate.title,
-      sourceUrl: candidate.url,
-      published: result.decision === "publish",
-      rationale: result.reason,
-      decidedAt: new Date(),
+  const validDecisions: BatchCandidateDecision[] = [];
+  for (const item of obj.decisions) {
+    if (!item || typeof item !== "object") continue;
+    const d = item as Record<string, unknown>;
+
+    const idx =
+      typeof d.candidateIndex === "number" ? Math.floor(d.candidateIndex) : -1;
+    if (idx < 0 || idx >= candidateCount) continue;
+
+    const decision: JudgmentDecision =
+      d.decision === "publish" || d.decision === "reject"
+        ? (d.decision as JudgmentDecision)
+        : "reject";
+    const score =
+      typeof d.score === "number" && d.score >= 0 && d.score <= 100
+        ? Math.round(d.score)
+        : 0;
+    const reason =
+      typeof d.reason === "string" && d.reason.trim().length > 0
+        ? d.reason.trim()
+        : "No reason provided";
+
+    validDecisions.push({
+      candidateIndex: idx,
+      decision,
+      score,
+      reason,
     });
-  } catch (dbErr) {
-    // If the row already exists (race condition), ignore — the earlier judgment wins
-    console.warn(
-      `[Judgment] DB insert skipped for "${candidate.topicKey}" (likely duplicate):`,
-      dbErr
-    );
+  }
+
+  return { decisions: validDecisions };
+}
+
+// ─── Batch Editorial Judgment ────────────────────────────────────────────────
+
+/**
+ * Judge a batch of 3-5 candidates in a SINGLE Gemini API request.
+ *
+ * Successful decisions are persisted to seen_topics.
+ * If Gemini fails (429, timeout, network failure), NO candidates are marked in DB,
+ * allowing them to be preserved and retried on a future tick.
+ *
+ * @param candidates Array of 3-5 pre-filtered unseen candidates
+ * @param persona    Mira Voss's full persona config
+ * @param agentId    UUID of the agent
+ */
+export async function judgeCandidateBatch(
+  candidates: Topic[],
+  persona: PersonaConfig,
+  agentId: string
+): Promise<BatchJudgmentResult> {
+  if (candidates.length === 0) {
+    return { status: "success", evaluated: [] };
   }
 
   console.log(
-    `[Judgment] ${result.decision.toUpperCase()} — "${candidate.title}" | ${result.reason}`
+    `[Judge] Evaluating ${candidates.length} candidates in one Gemini request`
   );
 
-  return result;
+  const formattedCandidates = candidates
+    .map(
+      (c, i) =>
+        `Candidate [${i}]:\nTitle: ${c.title}\nSource: ${c.source}\nPublished: ${c.publishedAt}\nURL: ${c.url}\nSummary: ${c.summary}`
+    )
+    .join("\n\n");
+
+  const systemInstruction = `${personaSystemPrompt(persona)}
+
+You are acting as the editorial filter for ${persona.name}'s AI security research feed.
+
+REJECTION RULES — reject a candidate if ANY of these apply:
+${rejectRulesPrompt(persona)}
+
+SCORING GUIDE:
+- 0–30:  Off-domain, pure marketing, or lacking technical substance → REJECT
+- 31–59: Marginally relevant but insufficient depth or novelty → REJECT
+- 60–79: Solid technical relevance with meaningful security angle → PUBLISH
+- 80–100: High-value, novel, technically rich AI security finding → MUST PUBLISH
+
+Evaluate each candidate independently by its index (0 to ${candidates.length - 1}).
+Only assign decision="publish" when score >= 60. Provide a concise reason for each candidate.`;
+
+  const userContent = `Evaluate these ${candidates.length} candidates for ${persona.name}'s AI security research feed:
+
+${formattedCandidates}
+
+Return structured editorial judgments for all ${candidates.length} candidates.`;
+
+  let batchOutput: BatchJudgmentOutput;
+
+  try {
+    const raw = await generateStructured<BatchJudgmentOutput>({
+      systemInstruction,
+      userContent,
+      schema: BATCH_JUDGMENT_SCHEMA,
+      temperature: 0.2,
+    });
+
+    batchOutput = validateBatchOutput(raw, candidates.length);
+  } catch (err) {
+    const errMessage = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[Judge] Gemini unavailable — preserving candidates for future retry (${errMessage.slice(0, 100)})`
+    );
+    return {
+      status: "error",
+      evaluated: [],
+      error: errMessage,
+    };
+  }
+
+  // Process and log valid judgments
+  const evaluatedResults: EvaluatedCandidate[] = [];
+
+  for (let i = 0; i < candidates.length; i++) {
+    const candidate = candidates[i];
+    const itemDecision = batchOutput.decisions.find(
+      (d) => d.candidateIndex === i
+    );
+
+    let finalDecision: JudgmentDecision = "reject";
+    let score = 0;
+    let reason = "Omitted by judge response";
+
+    if (itemDecision) {
+      score = itemDecision.score;
+      finalDecision =
+        score >= 60 && itemDecision.decision === "publish"
+          ? "publish"
+          : "reject";
+      reason =
+        finalDecision !== itemDecision.decision
+          ? `Score ${score}/100 below threshold (60): ${itemDecision.reason}`
+          : itemDecision.reason;
+    }
+
+    // Required log format: [Judge] Candidate X: PUBLISH/REJECT score/100
+    console.log(
+      `[Judge] Candidate ${i + 1}: ${finalDecision.toUpperCase()} ${score}/100 — "${candidate.title.slice(0, 60)}"`
+    );
+
+    // Save successful judgment decision to seen_topics DB table
+    try {
+      await db.insert(seenTopics).values({
+        agentId,
+        topicKey: candidate.topicKey,
+        title: candidate.title,
+        sourceUrl: candidate.url,
+        published: finalDecision === "publish",
+        decisionReason: `[${score}/100] ${reason}`,
+        decidedAt: new Date(),
+      });
+    } catch (dbErr) {
+      console.warn(
+        `[Judge] seen_topics insert skipped for key "${candidate.topicKey}":`,
+        (dbErr as Error).message?.slice(0, 100)
+      );
+    }
+
+    evaluatedResults.push({
+      candidate,
+      decision: finalDecision,
+      score,
+      reason,
+    });
+  }
+
+  return {
+    status: "success",
+    evaluated: evaluatedResults,
+  };
 }

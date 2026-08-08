@@ -79,7 +79,7 @@ export async function discoverFromHN(
 
       try {
         const res = await fetch(url, {
-          headers: { "User-Agent": "CIPHER-Agent/1.0" },
+          headers: { "User-Agent": "MiraVoss-Agent/1.0" },
           signal: AbortSignal.timeout(8000),
         });
 
@@ -159,7 +159,7 @@ export async function discoverFromArxiv(
 
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": "CIPHER-Agent/1.0" },
+      headers: { "User-Agent": "MiraVoss-Agent/1.0" },
       signal: AbortSignal.timeout(10000),
     });
 
@@ -261,3 +261,103 @@ export async function discoverTopics(): Promise<Topic[]> {
 
   return merged;
 }
+
+// ─── Local Pre-filter ─────────────────────────────────────────────────────────
+
+const POSITIVE_SECURITY_KEYWORDS = [
+  "security",
+  "attack",
+  "vulnerability",
+  "exploit",
+  "prompt injection",
+  "jailbreak",
+  "adversarial",
+  "backdoor",
+  "red team",
+  "model extraction",
+  "poisoning",
+  "robustness",
+  "privacy",
+  "leakage",
+  "malware",
+  "trojan",
+  "defense",
+  "threat",
+  "sandbox",
+  "bypass",
+  "exfiltration",
+  "unauthorized",
+  "alignment",
+  "risk",
+  "safety",
+  "trust",
+  "supply chain",
+  "weights",
+];
+
+const NEGATIVE_KEYWORDS = [
+  "hiring",
+  "job",
+  "career",
+  "salary",
+  "marketing",
+  "bitcoin",
+  "nft",
+  "series a",
+  "funding round",
+  "startup launch",
+  "best ai tools",
+  "productivity",
+  "art generation",
+];
+
+/**
+ * Local pre-filter to remove obvious non-AI-security stories and select
+ * the strongest 3-5 candidates locally using keyword and heuristic rules.
+ * This drastically reduces Gemini API request volume.
+ */
+export function prefilterCandidates(
+  candidates: Topic[],
+  maxCandidates: number = 5
+): Topic[] {
+  if (candidates.length === 0) return [];
+
+  const scored = candidates
+    .map((candidate) => {
+      const text = `${candidate.title} ${candidate.summary}`.toLowerCase();
+
+      // Check negative keywords first
+      for (const neg of NEGATIVE_KEYWORDS) {
+        if (text.includes(neg)) {
+          return { candidate, score: -10 };
+        }
+      }
+
+      let score = 0;
+      for (const pos of POSITIVE_SECURITY_KEYWORDS) {
+        if (text.includes(pos)) {
+          score += 2;
+        }
+      }
+
+      // ArXiv cs.CR papers default to higher baseline relevance
+      if (candidate.source === "arxiv") {
+        score += 3;
+      }
+
+      return { candidate, score };
+    })
+    .filter((item) => item.score > 0);
+
+  // Sort by local relevance score descending
+  scored.sort((a, b) => b.score - a.score);
+
+  const topCandidates = scored.slice(0, maxCandidates).map((item) => item.candidate);
+
+  console.log(
+    `[Prefilter] Filtered ${candidates.length} candidates down to ${topCandidates.length} top candidates for Gemini evaluation`
+  );
+
+  return topCandidates;
+}
+

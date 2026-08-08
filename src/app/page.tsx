@@ -159,14 +159,14 @@ export default function Home() {
     fetchFeed(id);
   };
 
-  // Auto-refresh every 90 seconds when an agent is active
+  // Auto-refresh every 15 seconds when an agent is active
   useEffect(() => {
     if (!activeAgentId) return;
     fetchFeed(activeAgentId);
 
     const interval = setInterval(() => {
       fetchFeed(activeAgentId);
-    }, 90_000);
+    }, 15_000);
 
     return () => clearInterval(interval);
   }, [activeAgentId, fetchFeed]);
@@ -189,7 +189,7 @@ export default function Home() {
         <div className="status-line">
           <span className="status-dot" />
           <span>
-            Active · Publishes every ~25 min · No human editorial input
+            Active · Publishes every ~2 min · No human editorial input
           </span>
         </div>
       </header>

@@ -2,8 +2,8 @@ name: Mira Voss Agent Tick
 
 on:
   schedule:
-    # Every 25 minutes — fallback when Vercel Cron is unavailable (free tier)
-    - cron: "*/25 * * * *"
+    # Every 2 minutes — autonomous tick trigger
+    - cron: "*/2 * * * *"
   # Manual trigger from GitHub Actions UI (e.g. for debugging or initial test)
   workflow_dispatch:
     inputs:

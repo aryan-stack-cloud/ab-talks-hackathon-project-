@@ -2,47 +2,46 @@ import { NextRequest, NextResponse } from "next/server";
 import { runTick, runTickForAllAgents } from "@/lib/agent";
 
 /**
- * POST /api/agent/tick
- *
- * Secured endpoint that runs one agent cycle:
- * discover → filter → judge → generate+publish
- *
- * Authentication: Bearer token in Authorization header (CRON_SECRET).
- * Vercel Cron sends this automatically if configured in vercel.json.
- *
- * Body (optional): { agentId: string }
- * - If agentId is provided: runs tick for that agent only
- * - If omitted: runs tick for ALL agents (cron use case)
- *
- * Returns: { ok: true, results: TickResult[] }
+ * Validates request authorization header against CRON_SECRET.
+ * Supports:
+ * - Authorization: Bearer <CRON_SECRET>
+ * - x-cron-secret: <CRON_SECRET>
  */
-export async function POST(request: NextRequest) {
-  // ── Auth check ────────────────────────────────────────────────────────────
+function isAuthorized(request: NextRequest): boolean {
   const cronSecret = process.env.CRON_SECRET;
-
-  if (cronSecret) {
-    const authHeader = request.headers.get("authorization");
-    const token = authHeader?.replace(/^Bearer\s+/i, "").trim();
-
-    // Also check x-cron-secret header (Vercel Cron style)
-    const cronHeader = request.headers.get("x-cron-secret");
-
-    if (token !== cronSecret && cronHeader !== cronSecret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!cronSecret) {
+    return true; // If CRON_SECRET is not configured in env, allow execution
   }
 
-  // ── Parse body ────────────────────────────────────────────────────────────
-  let agentId: string | undefined;
+  const authHeader = request.headers.get("authorization");
+  const token = authHeader?.replace(/^Bearer\s+/i, "").trim();
+  const cronHeader = request.headers.get("x-cron-secret")?.trim();
 
+  return token === cronSecret || cronHeader === cronSecret;
+}
+
+/**
+ * POST /api/agent/tick
+ *
+ * Manual or automated tick trigger via POST.
+ * Auth: Authorization: Bearer <CRON_SECRET> or x-cron-secret: <CRON_SECRET>
+ * Body (optional): { agentId?: string }
+ */
+export async function POST(request: NextRequest) {
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let agentId: string | undefined;
   try {
-    const body = await request.json().catch(() => ({})) as { agentId?: string };
+    const body = (await request.json().catch(() => ({}))) as {
+      agentId?: string;
+    };
     agentId = body.agentId?.trim();
   } catch {
     agentId = undefined;
   }
 
-  // ── Run tick(s) ───────────────────────────────────────────────────────────
   try {
     if (agentId) {
       const result = await runTick(agentId);
@@ -52,7 +51,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, results });
     }
   } catch (err) {
-    console.error("[Tick Route] Unhandled error:", err);
+    console.error("[Tick POST] Unhandled error:", err);
     return NextResponse.json(
       { ok: false, error: String(err) },
       { status: 500 }
@@ -60,25 +59,34 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Allow Vercel Cron to call this with GET as well (vercel.json cron uses GET by default)
+/**
+ * GET /api/agent/tick
+ *
+ * Vercel Cron invocation route (Vercel Cron calls configured paths with HTTP GET).
+ * Auth: Authorization: Bearer <CRON_SECRET> or x-cron-secret: <CRON_SECRET>
+ * Query parameter (optional): ?agentId=<uuid>
+ */
 export async function GET(request: NextRequest) {
-  // For Vercel Cron GET requests — check the authorization header
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (cronSecret) {
-    const authHeader = request.headers.get("authorization");
-    const token = authHeader?.replace(/^Bearer\s+/i, "").trim();
-
-    if (token !== cronSecret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const agentId = searchParams.get("agentId")?.trim();
+
   try {
-    const results = await runTickForAllAgents();
-    return NextResponse.json({ ok: true, results });
+    if (agentId) {
+      const result = await runTick(agentId);
+      return NextResponse.json({ ok: true, results: [result] });
+    } else {
+      const results = await runTickForAllAgents();
+      return NextResponse.json({ ok: true, results });
+    }
   } catch (err) {
-    console.error("[Tick Cron] Unhandled error:", err);
-    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
+    console.error("[Tick GET] Unhandled error:", err);
+    return NextResponse.json(
+      { ok: false, error: String(err) },
+      { status: 500 }
+    );
   }
 }

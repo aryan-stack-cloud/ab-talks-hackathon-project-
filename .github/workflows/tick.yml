@@ -1,32 +1,31 @@
-name: CIPHER Agent Tick
+name: Mira Voss Agent Tick
 
 on:
   schedule:
-    # Every 25 minutes — fallback for when Vercel Cron is unavailable (free tier)
-    # GitHub Actions cron minimum is every 5 minutes; 25min = */25 * * * *
+    # Every 25 minutes — fallback when Vercel Cron is unavailable (free tier)
     - cron: "*/25 * * * *"
-  # Allow manual trigger from GitHub Actions UI for debugging
+  # Manual trigger from GitHub Actions UI (e.g. for debugging or initial test)
   workflow_dispatch:
     inputs:
       agentId:
-        description: "Specific agent UUID to tick (leave empty for all agents)"
+        description: "Specific agent UUID to tick (leave empty to run all agents)"
         required: false
         type: string
 
 jobs:
   tick:
-    name: Run CIPHER tick
+    name: Run Mira Voss tick
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
 
     steps:
-      - name: Ping CIPHER tick endpoint
+      - name: Trigger autonomous tick endpoint
         env:
-          APP_URL: ${{ secrets.CIPHER_APP_URL }}
-          CRON_SECRET: ${{ secrets.CIPHER_CRON_SECRET }}
+          APP_URL: ${{ secrets.MIRA_APP_URL }}
+          CRON_SECRET: ${{ secrets.MIRA_CRON_SECRET }}
           AGENT_ID: ${{ github.event.inputs.agentId }}
         run: |
-          # Build the request body
+          # Build request body
           if [ -n "$AGENT_ID" ]; then
             BODY="{\"agentId\":\"$AGENT_ID\"}"
           else
@@ -39,9 +38,9 @@ jobs:
             --silent \
             --output /tmp/tick_response.json \
             --write-out "%{http_code}" \
-            --max-time 120 \
+            --max-time 180 \
             --retry 2 \
-            --retry-delay 5 \
+            --retry-delay 10 \
             -X POST \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $CRON_SECRET" \
@@ -49,12 +48,11 @@ jobs:
             "$APP_URL/api/agent/tick")
 
           echo "HTTP status: $HTTP_STATUS"
-          echo "Response:"
+          echo "Response body:"
           cat /tmp/tick_response.json
 
-          # Fail the job if we got a non-2xx response
           if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
-            echo "ERROR: Tick endpoint returned $HTTP_STATUS"
+            echo "ERROR: Tick endpoint returned non-2xx status $HTTP_STATUS"
             exit 1
           fi
 

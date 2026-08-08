@@ -1,0 +1,61 @@
+name: CIPHER Agent Tick
+
+on:
+  schedule:
+    # Every 25 minutes — fallback for when Vercel Cron is unavailable (free tier)
+    # GitHub Actions cron minimum is every 5 minutes; 25min = */25 * * * *
+    - cron: "*/25 * * * *"
+  # Allow manual trigger from GitHub Actions UI for debugging
+  workflow_dispatch:
+    inputs:
+      agentId:
+        description: "Specific agent UUID to tick (leave empty for all agents)"
+        required: false
+        type: string
+
+jobs:
+  tick:
+    name: Run CIPHER tick
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping CIPHER tick endpoint
+        env:
+          APP_URL: ${{ secrets.CIPHER_APP_URL }}
+          CRON_SECRET: ${{ secrets.CIPHER_CRON_SECRET }}
+          AGENT_ID: ${{ github.event.inputs.agentId }}
+        run: |
+          # Build the request body
+          if [ -n "$AGENT_ID" ]; then
+            BODY="{\"agentId\":\"$AGENT_ID\"}"
+          else
+            BODY="{}"
+          fi
+
+          echo "Triggering tick at $APP_URL/api/agent/tick"
+
+          HTTP_STATUS=$(curl \
+            --silent \
+            --output /tmp/tick_response.json \
+            --write-out "%{http_code}" \
+            --max-time 120 \
+            --retry 2 \
+            --retry-delay 5 \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -d "$BODY" \
+            "$APP_URL/api/agent/tick")
+
+          echo "HTTP status: $HTTP_STATUS"
+          echo "Response:"
+          cat /tmp/tick_response.json
+
+          # Fail the job if we got a non-2xx response
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
+            echo "ERROR: Tick endpoint returned $HTTP_STATUS"
+            exit 1
+          fi
+
+          echo "Tick completed successfully"

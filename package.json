@@ -1,5 +1,5 @@
 {
-  "name": "cipher-agent",
+  "name": "mira-voss-agent",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -14,8 +14,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.1",
+    "@google/genai": "^1.10.0",
     "@neondatabase/serverless": "^0.10.4",
+    "dotenv": "^16.4.5",
     "drizzle-orm": "^0.36.4",
     "fast-xml-parser": "^4.5.0",
     "next": "15.1.0",

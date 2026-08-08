@@ -1,10 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    // Required for Neon serverless driver in edge/server components
-    serverComponentsExternalPackages: ["@neondatabase/serverless"],
-  },
+  // Neon serverless driver must not be bundled — use native Node Postgres APIs
+  serverExternalPackages: ["@neondatabase/serverless"],
 };
 
 export default nextConfig;

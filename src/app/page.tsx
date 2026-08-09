@@ -18,6 +18,7 @@ interface ParsedPost {
   keyPoints?: string[];
   body?: string;
   sourceName?: string;
+  imageUrl?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -47,6 +48,7 @@ function parsePostContent(raw: string): {
   keyPoints?: string[];
   paragraphs: string[];
   sourceName?: string;
+  imageUrl?: string;
 } {
   try {
     const parsed = JSON.parse(raw) as ParsedPost;
@@ -61,6 +63,7 @@ function parsePostContent(raw: string): {
         keyPoints: parsed.keyPoints,
         paragraphs: paragraphs.length > 0 ? paragraphs : [parsed.body || ""],
         sourceName: parsed.sourceName,
+        imageUrl: parsed.imageUrl,
       };
     }
   } catch {
@@ -82,7 +85,6 @@ function parsePostContent(raw: string): {
 function PostCard({ post }: { post: Post }) {
   const [copied, setCopied] = useState(false);
   const parsed = parsePostContent(post.text);
-
   const primarySource = post.sources && post.sources[0] ? post.sources[0] : null;
 
   const handleCopyLink = () => {
@@ -106,10 +108,25 @@ function PostCard({ post }: { post: Post }) {
         <span className="post-date">{formatDate(post.createdAt)}</span>
       </div>
 
-      {/* ── Headline ────────────────────────────────────────────────────── */}
-      {parsed.headline && <h3 className="post-headline">{parsed.headline}</h3>}
+      {/* ── Bold News Headline (Top) ────────────────────────────────────── */}
+      {parsed.headline && <h2 className="post-headline">{parsed.headline}</h2>}
 
-      {/* ── Executive Threat Takeaway ────────────────────────────────────── */}
+      {/* ── Featured Image (Directly Below Headline) ────────────────────── */}
+      {parsed.imageUrl && (
+        <div className="post-image-container">
+          <img
+            src={parsed.imageUrl}
+            alt={parsed.headline || "Article Featured Image"}
+            className="post-featured-image"
+            onError={(e) => {
+              // Hide image container on broken image link
+              (e.currentTarget.parentElement as HTMLElement).style.display = "none";
+            }}
+          />
+        </div>
+      )}
+
+      {/* ── Article Content (Under Image) ───────────────────────────────── */}
       {parsed.takeaway && (
         <div className="post-takeaway-box">
           <div className="post-takeaway-label">Executive Threat Takeaway</div>
@@ -117,7 +134,6 @@ function PostCard({ post }: { post: Post }) {
         </div>
       )}
 
-      {/* ── Key Bullet Findings ─────────────────────────────────────────── */}
       {parsed.keyPoints && parsed.keyPoints.length > 0 && (
         <ul className="post-keypoints">
           {parsed.keyPoints.map((point, i) => (
@@ -129,7 +145,6 @@ function PostCard({ post }: { post: Post }) {
         </ul>
       )}
 
-      {/* ── Formatted Paragraph Body ───────────────────────────────────── */}
       <div className="post-body">
         {parsed.paragraphs.map((paragraph, i) => (
           <p key={i}>{paragraph}</p>

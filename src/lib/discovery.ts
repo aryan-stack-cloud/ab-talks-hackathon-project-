@@ -8,7 +8,8 @@ export interface Topic {
   url: string;
   summary: string;
   publishedAt: string; // ISO date string
-  source: string; // e.g. "hackernews", "arXiv", "TechCrunch", "Dark Reading", "Google Web Search", etc.
+  source: string; // e.g. "hackernews", "arXiv", "TechCrunch", "Dark Reading", etc.
+  imageUrl?: string; // Optional article image URL extracted from source feed
   topicKey: string; // SHA-256 hash of title+url for dedup
 }
 
@@ -35,6 +36,52 @@ function extractText(val: unknown): string {
 
 function cleanHtmlTags(str: string): string {
   return str.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Extract featured image URL from RSS/Atom item object or HTML description.
+ */
+function extractImageUrl(item: Record<string, unknown>, rawSummary: string): string | undefined {
+  try {
+    if (item["media:content"]) {
+      const mc = item["media:content"];
+      if (typeof mc === "object" && mc !== null && "@_url" in mc) {
+        return String((mc as { "@_url": unknown })["@_url"]);
+      }
+      if (Array.isArray(mc) && mc[0] && typeof mc[0] === "object" && "@_url" in mc[0]) {
+        return String((mc[0] as { "@_url": unknown })["@_url"]);
+      }
+    }
+
+    if (item["media:thumbnail"]) {
+      const mt = item["media:thumbnail"];
+      if (typeof mt === "object" && mt !== null && "@_url" in mt) {
+        return String((mt as { "@_url": unknown })["@_url"]);
+      }
+      if (Array.isArray(mt) && mt[0] && typeof mt[0] === "object" && "@_url" in mt[0]) {
+        return String((mt[0] as { "@_url": unknown })["@_url"]);
+      }
+    }
+
+    if (item["enclosure"]) {
+      const enc = item["enclosure"];
+      if (typeof enc === "object" && enc !== null && "@_url" in enc) {
+        const url = String((enc as { "@_url": unknown })["@_url"]);
+        if (url.match(/\.(jpg|jpeg|png|webp|gif|svg)/i)) {
+          return url;
+        }
+      }
+    }
+
+    const imgMatch = rawSummary.match(/<img[^>]+src=["'](https?:\/\/[^"'\s]+)["']/i);
+    if (imgMatch && imgMatch[1]) {
+      return imgMatch[1];
+    }
+  } catch {
+    // Non-fatal image parsing error
+  }
+
+  return undefined;
 }
 
 // ─── 45+ Tech & Cybersecurity News Sources (RSS / Atom Feeds) ────────────────
@@ -125,6 +172,7 @@ export async function discoverFromRSS(source: NewsFeedSource): Promise<Topic[]> 
         const rawLink = extractText(item.link || item.guid);
         const rawSummary = extractText(item.description || item["content:encoded"] || "");
         const rawDate = extractText(item.pubDate || item["dc:date"]);
+        const imageUrl = extractImageUrl(item as Record<string, unknown>, rawSummary);
 
         const title = cleanHtmlTags(rawTitle);
         const link = rawLink.trim();
@@ -138,6 +186,7 @@ export async function discoverFromRSS(source: NewsFeedSource): Promise<Topic[]> 
           summary: summary || title,
           publishedAt: rawDate ? new Date(rawDate).toISOString() : new Date().toISOString(),
           source: source.name,
+          imageUrl,
           topicKey: topicKey(title, link),
         });
       }
@@ -151,6 +200,7 @@ export async function discoverFromRSS(source: NewsFeedSource): Promise<Topic[]> 
         const rawTitle = extractText(entry.title);
         const rawSummary = extractText(entry.summary || entry.content || "");
         const rawDate = extractText(entry.published || entry.updated);
+        const imageUrl = extractImageUrl(entry as Record<string, unknown>, rawSummary);
 
         let link = "";
         if (Array.isArray(entry.link)) {
@@ -173,6 +223,7 @@ export async function discoverFromRSS(source: NewsFeedSource): Promise<Topic[]> 
           summary: summary || title,
           publishedAt: rawDate ? new Date(rawDate).toISOString() : new Date().toISOString(),
           source: source.name,
+          imageUrl,
           topicKey: topicKey(title, link),
         });
       }
@@ -214,10 +265,6 @@ const WEB_SEARCH_QUERIES = [
   `"AI threat" OR "cybersecurity AI" OR "deepfake security" when:24h`,
 ];
 
-/**
- * Search the entire web dynamically for real-time live tech/security news
- * using Google News RSS search endpoints.
- */
 export async function discoverFromWebSearch(): Promise<Topic[]> {
   const query = WEB_SEARCH_QUERIES[Math.floor(Math.random() * WEB_SEARCH_QUERIES.length)];
   const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
@@ -257,6 +304,7 @@ export async function discoverFromWebSearch(): Promise<Topic[]> {
       const link = rawLink.trim();
       const summary = cleanHtmlTags(rawSummary).slice(0, 400);
       const sourceName = rawSource ? cleanHtmlTags(rawSource) : "Web Search";
+      const imageUrl = extractImageUrl(item as Record<string, unknown>, rawSummary);
 
       if (!title || !link || !link.startsWith("http")) continue;
 
@@ -266,6 +314,7 @@ export async function discoverFromWebSearch(): Promise<Topic[]> {
         summary: summary || title,
         publishedAt: rawDate ? new Date(rawDate).toISOString() : new Date().toISOString(),
         source: sourceName,
+        imageUrl,
         topicKey: topicKey(title, link),
       });
     }

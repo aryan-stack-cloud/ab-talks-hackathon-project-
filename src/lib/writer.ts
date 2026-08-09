@@ -148,13 +148,14 @@ Write the structured article now.`;
     );
   }
 
-  // Format payload as JSON string so UI can parse headline, takeaway, keyPoints, and body paragraphs!
+  // Format payload as JSON string so UI can parse headline, takeaway, keyPoints, body paragraphs, and featured image!
   const formattedPayload = JSON.stringify({
     headline: validated.headline,
     takeaway: validated.takeaway,
     keyPoints: validated.keyPoints,
     body: validated.text,
     sourceName: candidate.source,
+    imageUrl: candidate.imageUrl,
   });
 
   // ── Insert into posts table ───────────────────────────────────────────────

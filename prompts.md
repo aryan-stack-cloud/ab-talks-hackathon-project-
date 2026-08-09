@@ -1,13 +1,13 @@
-# 📜 Project Prompts & Development Lifecycle Log
+# 📜 Key Engineering Prompts & Problem Resolution Lifecycle
 
-> **Development History of The Mira Voss Dispatch — Autonomous AI Security Newspaper**  
-> This log organizes all user instructions and directives into structured phases of the software development lifecycle.
+> **Core Building Instructions & Critical Error Resolutions**  
+> Curated record of essential engineering directives, architectural decisions, feature implementations, and critical error fixes across the development lifecycle.
 
 ---
 
-## 🚀 Phase 1: Project Initialization & Core Automation Infrastructure
+## 🚀 Phase 1: Core Automation Infrastructure & Initial Error Fixes
 
-### 1. Webpack Module Resolution Fix
+### 1. Webpack Module Resolution Fix `[CRITICAL ERROR FIX]`
 > *"showing the error Error: Cannot find module './627.js' Require stack..."*
 
 ### 2. Post Cadence & Scheduling Requirements
@@ -16,115 +16,82 @@
 ### 3. Interactive Time Interval & Automation Settings UI
 > *"it is not showing a new news in every time interval , what we want is that it would show a new news in a time interval which we can set there would be a option of setting a time interval to automate the new post"*
 
-### 4. GitHub Repository Sync
-> *"piush it to github"*
-
 ---
 
 ## 🌐 Phase 2: Source Expansion & Web Scraping Engine
 
-### 5. Major News Sources Expansion Request
+### 4. Major News Sources Expansion Request
 > *"add these sources for the news extraction too , these sites # Website Best for Credibility: 1 TechCrunch, 2 The Verge, 3 Wired, 4 Ars Technica, 5 Reuters Technology, 6 MIT Technology Review, 7 Engadget, 8 ZDNET, 9 CNET, 10 VentureBeat, 11 TechRadar, 12 Tom's Hardware, 13 Android Authority, 14 9to5Google, 15 9to5Mac, 16 Gadgets 360..."*
 
-### 6. Web Indexing & Expanded Extraction Access
+### 5. Web Indexing & Expanded Extraction Access
 > *"add more websites to it , or it can acces the web for the latest tech news"*
 
 ---
 
 ## 🗄️ Phase 3: Architecture & Data Layer (Neon Postgres & Gemini AI)
 
-### 7. Brainstorming & Architecture Discussion Directive
-> *"for now do not make any changes into the code just tak to me , what more changes can we do to make it good"*
+### 6. Neon Database Architectural Integration
+> *"what does neon doing in the code base"*
 
-### 8. Neon Database Architectural Explanation
-> *"do not change any code , talk to me , what does neon doing in the code base"*
-
-### 9. News Publication Redesign (Scannability & Structured Layout)
+### 7. News Publication Redesign (Scannability & Structured Layout)
 > *"first i want a good representaion of the news it looks like a whole paragraph , what we want it as , a proper news outlet eaasy to read"*
 
-### 10. Headline & Image Card Structure Design
+### 8. Headline & Image Card Structure Design
 > *"i want the news to look something like this the image i pased , a good headline with a image used from the site and then the news under the image , if it does not have a image then no need"*
 
-### 11. Guaranteed Article Featured Image Requirement
+### 9. Guaranteed Article Featured Image Requirement
 > *"okaay what we want now is in every post there should me a image related to the news either from the news page extracted or anyways"*
 
-### 12. Relevant News Site Image Scraping (OpenGraph & No Abstract Wallpapers)
+### 10. Relevant News Site Image Scraping (OpenGraph Scraping)
 > *"why it is making inrelevnt images like i have pasted , images should be from the sites or relevnt one"*
 
 ---
 
 ## 📰 Phase 4: UI/UX Transformation — Authentic Printed Newspaper Design
 
-### 13. Prompts History Log File Creation
-> *"also create a promts.md file in which all the promots i gave you from start should be stored in it and also push it to github to and all the promyts i will give also stored there"*
-
-### 14. UI Enhancement Focus & Pre-Deployment Polish
-> *"lets work on the ui of the app first then we will deploy (no chnage in code for now )"*
-
-### 15. Publication Masthead & Edition Bar Feature Selection
-> *"Publication Masthead & Edition Bar: (no code for now)"*
-
-### 16. Publication Masthead Implementation & Expanded Post Intervals
+### 11. Expanded Post Interval Cadence Options (1m, 2m, 5m, 10m, 1h, 5h, 1d)
 > *"okay lets try this one , but also do one chnahge in it the time between the post also a option of 1hr and 5hr and 1 day"*
 
-### 17. Classic Printed Newspaper Front Page Masthead Styling
+### 12. Classic Printed Newspaper Front Page Masthead Styling
 > *"make the website lokks like this image i pasted , if any problem then tell me if not then work [Classic Printed Newspaper Image]"*
 
-### 18. Complete Full Newspaper Theme & UI/UX Transformation
+### 13. Complete Full Newspaper Theme & UI/UX Transformation
 > *"why ur not chaning the ui of the website your only chnaging the website geadline i want uiux to look like this"*
 
-### 19. High-Visibility Highlighted Control Panels & Action Buttons
+### 14. High-Visibility Highlighted Control Panels & Action Buttons
 > *"this section Initialize Agent Creates a Mira Voss agent and triggers the first autonomous discovery cycle immediately. Initialize Mira Voss → should be higlighed and eaasy to see and use , also this one Post Automation & Interval Settings..."*
 
-### 20. Soft & Creamy Warm Vintage Newsprint Color Palette
+### 15. Soft & Creamy Warm Vintage Newsprint Color Palette
 > *"webite feels too bright make it littile soft and creamy"*
 
-### 21. Instant Initial Post Generation on Agent Initialization
+### 16. Instant Initial Post Generation on Agent Initialization
 > *"on the clicl of Initialize Mira Voss → it should instantly generate the first post then it can go for the automation"*
 
 ---
 
 ## 📊 Phase 5: Editorial Newsroom Dashboard & Interactive Experience
 
-### 22. Complete Editorial Dashboard Enhancement
+### 17. Complete Editorial Dashboard Enhancement
 > *"improve the dashboard design"*
 
 ---
 
-## 🚀 Phase 6: Multi-User Access, Production Deployment & Judge Documentation
+## 🚀 Phase 6: Production Deployment & Critical Vercel Error Resolutions
 
-### 23. Repository Credentials Inquiry
-> *"do not change in any code , why the env local file is not present in github repo"*
-
-### 24. Multi-User Access Strategy
-> *"then how will the app wil work if others can not acces it (no change in code )"*
-
-### 25. Shared Credential & Vercel Deployment Selection
-> *"what i want is they will also use the same api key as mine all other things from the env local , can we push it to github"*
-
-### 26. Vercel Deployment Not Found Error Resolution
+### 18. Vercel Deployment Not Found Error `[CRITICAL ERROR FIX]`
 > *"04: NOT_FOUND Code: DEPLOYMENT_NOT_FOUND ID: bom1::2rzz7-1786269505673-76af607f192f This deployment cannot be found."*
 
-### 27. Vercel Hobby Tier Cron Schedule Fix
+### 19. Vercel Hobby Tier Cron Schedule Fix `[CRITICAL ERROR FIX]`
 > *"Hobby accounts are limited to daily cron jobs. This cron expression ("*/2 * * * *") would run more than once per day. Upgrade to the Pro plan to unlock all Cron Jobs features on Vercel."*
 
-### 28. Vercel Production Build Success Log Verification
-> *"15:38:35.857 Running build in Washington, D.C., USA ... Compiled successfully ... Generating static pages (8/8) ... Collecting build traces ... this is shwoing in ther vercel deployment sectionn"*
-
-### 29. Vercel Build Trace Authorization & Deployment Probe Fix
+### 20. Vercel Build Trace Probe & Route Authorization Fix `[CRITICAL ERROR FIX]`
 > *"deployment is failing to vercel see [Vercel deployment failure logs screenshot]"*
 
-### 30. Vercel Deployment Output Verification Log
-> *"still same the same error 16:45:41.306 Running build ... Build Completed in /vercel/output [42s] ... Deploying outputs..."*
-
-### 31. Vercel Production Domain Assignment Directive
+### 21. Vercel Production Domain Assignment Directive `[DEPLOYMENT FIX]`
 > *"showing this thing [ab-talks-hackathon-project.vercel.app No Deployment screenshot]"*
 
-### 32. Comprehensive Hackathon Judge README Documentation
+### 22. Comprehensive Hackathon Judge README Documentation
 > *"create a readme in the repo because it is provided in the problem statement provided for the judgement"*
 
-### 33. Active Live Production URL in README
+### 23. Active Live Production URL in README
 > *"in the readme paste the active url link too"*
-
-### 34. Structured Development Lifecycle Prompts Organization
-> *"organize the prompts.md by structuring the prompts in the phases of development showcasing the proper development"*

@@ -9,7 +9,7 @@ export interface Topic {
   summary: string;
   publishedAt: string; // ISO date string
   source: string; // e.g. "hackernews", "arXiv", "TechCrunch", "Dark Reading", etc.
-  imageUrl: string; // News featured image URL (extracted or relevant fallback)
+  imageUrl: string; // News featured image URL (extracted from site or topic photo fallback)
   topicKey: string; // SHA-256 hash of title+url for dedup
 }
 
@@ -38,26 +38,75 @@ function cleanHtmlTags(str: string): string {
   return str.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim();
 }
 
-const TECH_FEATURED_IMAGES = [
-  "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80", // Cybersecurity & Code
-  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80", // Abstract AI Neural Mesh
-  "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80", // Matrix / Binary Stream
-  "https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=1200&q=80", // AI Brain / Future Intelligence
-  "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80", // Digital Security Shield
-  "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80", // Silicon Hardware / Microchip
+/**
+ * Realistic, high-resolution authentic tech & cybersecurity photos (no abstract wallpapers).
+ */
+const REAL_TECH_PHOTOS = [
+  "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80", // Hacker / Security Code Screen
+  "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80", // Binary Stream
+  "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80", // Server Room Data Center
+  "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80", // Microchip & Hardware
+  "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80", // Cyber Security Shield
+  "https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&w=1200&q=80", // Developer Coding at Workstation
 ];
 
 /**
- * Returns extracted image URL or deterministically resolves a relevant high-res tech featured image.
+ * Fetch the actual article page and scrape the OpenGraph og:image or twitter:image tag.
+ */
+export async function fetchOpenGraphImage(url: string): Promise<string | undefined> {
+  if (!url || !url.startsWith("http")) return undefined;
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+      signal: AbortSignal.timeout(3500),
+    });
+
+    if (!res.ok) return undefined;
+
+    const html = await res.text();
+    const ogMatch =
+      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["'](https?:\/\/[^"'\s]+)["']/i) ||
+      html.match(/<meta[^>]+content=["'](https?:\/\/[^"'\s]+)["'][^>]+property=["']og:image["']/i) ||
+      html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["'](https?:\/\/[^"'\s]+)["']/i);
+
+    if (ogMatch && ogMatch[1]) {
+      const imgUrl = ogMatch[1].trim();
+      if (
+        !imgUrl.includes("1x1") &&
+        !imgUrl.includes("favicon") &&
+        !imgUrl.includes("avatar") &&
+        !imgUrl.includes("logo")
+      ) {
+        return imgUrl;
+      }
+    }
+  } catch {
+    // Non-fatal
+  }
+  return undefined;
+}
+
+/**
+ * Returns extracted image URL or deterministically resolves a relevant tech photo fallback.
  */
 export function resolveTopicImageUrl(title: string, summary: string, extractedUrl?: string): string {
-  if (extractedUrl && extractedUrl.startsWith("http") && !extractedUrl.includes("1x1") && !extractedUrl.includes("pixel")) {
+  if (
+    extractedUrl &&
+    extractedUrl.startsWith("http") &&
+    !extractedUrl.includes("1x1") &&
+    !extractedUrl.includes("pixel") &&
+    !extractedUrl.includes("avatar")
+  ) {
     return extractedUrl;
   }
 
   const hash = createHash("md5").update(`${title}|${summary}`).digest("hex");
   const num = parseInt(hash.slice(0, 4), 16);
-  return TECH_FEATURED_IMAGES[num % TECH_FEATURED_IMAGES.length];
+  return REAL_TECH_PHOTOS[num % REAL_TECH_PHOTOS.length];
 }
 
 /**
@@ -89,7 +138,7 @@ function extractImageUrl(item: Record<string, unknown>, rawSummary: string): str
       const enc = item["enclosure"];
       if (typeof enc === "object" && enc !== null && "@_url" in enc) {
         const url = String((enc as { "@_url": unknown })["@_url"]);
-        if (url.match(/\.(jpg|jpeg|png|webp|gif|svg)/i)) {
+        if (url.match(/\.(jpg|jpeg|png|webp|gif)/i)) {
           return url;
         }
       }

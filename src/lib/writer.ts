@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { posts } from "@/db/schema";
 import type { Topic } from "./discovery";
+import { fetchOpenGraphImage } from "./discovery";
 import type { PersonaConfig } from "./persona";
 import { personaSystemPrompt } from "./persona";
 import { POST_SCHEMA, generateStructured, type PostOutput } from "./gemini";
@@ -148,6 +149,17 @@ Write the structured article now.`;
     );
   }
 
+  // Scrape exact live article OpenGraph featured image directly from the news site page
+  let finalImageUrl = candidate.imageUrl;
+  try {
+    const siteOgImage = await fetchOpenGraphImage(candidate.url);
+    if (siteOgImage) {
+      finalImageUrl = siteOgImage;
+    }
+  } catch {
+    // Fall back to candidate imageUrl
+  }
+
   // Format payload as JSON string so UI can parse headline, takeaway, keyPoints, body paragraphs, and featured image!
   const formattedPayload = JSON.stringify({
     headline: validated.headline,
@@ -155,7 +167,7 @@ Write the structured article now.`;
     keyPoints: validated.keyPoints,
     body: validated.text,
     sourceName: candidate.source,
-    imageUrl: candidate.imageUrl,
+    imageUrl: finalImageUrl,
   });
 
   // ── Insert into posts table ───────────────────────────────────────────────
@@ -170,7 +182,7 @@ Write the structured article now.`;
 
     const wordCount = validated.text.split(/\s+/).length;
     console.log(
-      `[Writer] Structured post inserted — "${validated.headline}" (${wordCount} words)`
+      `[Writer] Structured post inserted — "${validated.headline}" (${wordCount} words, image: ${finalImageUrl ? "yes" : "no"})`
     );
   } catch (dbErr) {
     console.error("[Writer] DB insert failed:", dbErr);

@@ -107,3 +107,8 @@ This document records all user instructions, directives, and feature requests pr
 
 ## 21. UI Enhancement Focus & Pre-Deployment Polish
 > "lets work on the ui of the app first then we will deploy (no chnage in code for now )"
+
+---
+
+## 22. Publication Masthead & Edition Bar Feature Selection
+> "Publication Masthead & Edition Bar: (no code for now)"

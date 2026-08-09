@@ -127,3 +127,8 @@ This document records all user instructions, directives, and feature requests pr
 
 ## 25. Complete Full Newspaper Theme & UI/UX Transformation
 > "why ur not chaning the ui of the website your only chnaging the website geadline i want uiux to look like this"
+
+---
+
+## 26. High-Visibility Highlighted Control Panels & Action Buttons
+> "this section Initialize Agent Creates a Mira Voss agent and triggers the first autonomous discovery cycle immediately. Initialize Mira Voss → should be higlighed and eaasy to see and use , also this one Post Automation & Interval Settings..."

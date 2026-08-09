@@ -8,7 +8,7 @@ export interface Topic {
   url: string;
   summary: string;
   publishedAt: string; // ISO date string
-  source: string; // e.g. "hackernews", "arxiv", "techcrunch", "wired", etc.
+  source: string; // e.g. "hackernews", "arXiv", "TechCrunch", "Dark Reading", "Google Web Search", etc.
   topicKey: string; // SHA-256 hash of title+url for dedup
 }
 
@@ -37,7 +37,7 @@ function cleanHtmlTags(str: string): string {
   return str.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim();
 }
 
-// ─── 20 Tech News Sources (RSS / Atom Feeds) ─────────────────────────────────
+// ─── 45+ Tech & Cybersecurity News Sources (RSS / Atom Feeds) ────────────────
 
 export interface NewsFeedSource {
   name: string;
@@ -45,6 +45,7 @@ export interface NewsFeedSource {
 }
 
 export const TECH_NEWS_SOURCES: NewsFeedSource[] = [
+  // ── Premier Tech Outlets ──────────────────────────────────────────────────
   { name: "TechCrunch", url: "https://techcrunch.com/feed/" },
   { name: "The Verge", url: "https://www.theverge.com/rss/index.xml" },
   { name: "Wired", url: "https://www.wired.com/feed/rss" },
@@ -60,11 +61,36 @@ export const TECH_NEWS_SOURCES: NewsFeedSource[] = [
   { name: "Android Authority", url: "https://www.androidauthority.com/feed/" },
   { name: "9to5Google", url: "https://9to5google.com/feed/" },
   { name: "9to5Mac", url: "https://9to5mac.com/feed/" },
+
+  // ── Premier Cybersecurity Publications ────────────────────────────────────
+  { name: "Dark Reading", url: "https://www.darkreading.com/rss.xml" },
+  { name: "The Hacker News", url: "https://feeds.feedburner.com/TheHackersNews" },
+  { name: "BleepingComputer", url: "https://www.bleepingcomputer.com/feed/" },
+  { name: "SecurityWeek", url: "https://www.securityweek.com/feed/" },
+  { name: "Krebs on Security", url: "https://krebsonsecurity.com/feed/" },
+
+  // ── Deep Tech & Hardware Outlets ──────────────────────────────────────────
+  { name: "IEEE Spectrum", url: "https://spectrum.ieee.org/feeds/feed.rss" },
+  { name: "SiliconANGLE", url: "https://siliconangle.com/feed/" },
+  { name: "Slashdot", url: "https://rss.slashdot.org/Slashdot/slashdotMain" },
+  { name: "TechSpot", url: "https://www.techspot.com/backend.xml" },
+  { name: "Gizmodo", url: "https://gizmodo.com/rss" },
+
+  // ── Enterprise & Tech Business ────────────────────────────────────────────
+  { name: "Computerworld", url: "https://www.computerworld.com/index.rss" },
+  { name: "InfoWorld", url: "https://www.infoworld.com/index.rss" },
+  { name: "Fast Company", url: "https://www.fastcompany.com/latest/rss" },
+
+  // ── Indian & Global Regional Tech ──────────────────────────────────────────
   { name: "Gadgets 360", url: "https://www.gadgets360.com/rss/news" },
   { name: "91mobiles", url: "https://www.91mobiles.com/hub/feed/" },
   { name: "The Indian Express – Tech", url: "https://indianexpress.com/section/technology/feed/" },
   { name: "Times of India – Tech", url: "https://timesofindia.indiatimes.com/rssfeeds/66949542.cms" },
   { name: "India Today – Tech", url: "https://www.indiatoday.in/rss/1206584" },
+  { name: "Analytics India Magazine", url: "https://analyticsindiamag.com/feed/" },
+  { name: "Moneycontrol Tech", url: "https://www.moneycontrol.com/rss/technology.xml" },
+  { name: "Livemint Tech", url: "https://www.livemint.com/rss/technology" },
+  { name: "Gadgets Now", url: "https://www.gadgetsnow.com/rssfeedsection/4711948.cms" },
 ];
 
 /**
@@ -152,20 +178,18 @@ export async function discoverFromRSS(source: NewsFeedSource): Promise<Topic[]> 
       }
     }
 
-    return results.slice(0, 5); // Take top 5 newest per feed
+    return results.slice(0, 5);
   } catch {
-    // Non-fatal feed error (e.g. timeout or feed temporary offline)
     return [];
   }
 }
 
 /**
- * Fetch stories from a randomized active batch of the 20 tech news sources.
+ * Fetch stories from a randomized active batch of the 40+ tech news sources.
  */
 export async function discoverFromTechNews(): Promise<Topic[]> {
-  // Shuffle sources and select 6 per tick for high speed and fresh source variety
   const shuffled = [...TECH_NEWS_SOURCES].sort(() => Math.random() - 0.5);
-  const activeBatch = shuffled.slice(0, 6);
+  const activeBatch = shuffled.slice(0, 8);
 
   const feedResults = await Promise.allSettled(
     activeBatch.map((source) => discoverFromRSS(source))
@@ -179,6 +203,77 @@ export async function discoverFromTechNews(): Promise<Topic[]> {
   }
 
   return topics;
+}
+
+// ─── Live Web Search Discovery (Google News RSS Web Index) ───────────────────
+
+const WEB_SEARCH_QUERIES = [
+  `"AI security" OR "LLM vulnerability" OR "prompt injection" when:24h`,
+  `"artificial intelligence" AND (jailbreak OR backdoor OR "red team") when:24h`,
+  `"model security" OR "adversarial machine learning" OR "AI exploit" when:24h`,
+  `"AI threat" OR "cybersecurity AI" OR "deepfake security" when:24h`,
+];
+
+/**
+ * Search the entire web dynamically for real-time live tech/security news
+ * using Google News RSS search endpoints.
+ */
+export async function discoverFromWebSearch(): Promise<Topic[]> {
+  const query = WEB_SEARCH_QUERIES[Math.floor(Math.random() * WEB_SEARCH_QUERIES.length)];
+  const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
+
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "MiraVoss-Agent/1.0" },
+      signal: AbortSignal.timeout(7000),
+    });
+
+    if (!res.ok) return [];
+
+    const xml = await res.text();
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      attributeNamePrefix: "@_",
+      textNodeName: "#text",
+      isArray: (name) => name === "item",
+    });
+
+    const parsed = parser.parse(xml);
+    const items = parsed?.rss?.channel?.item;
+
+    if (!items) return [];
+
+    const itemArray = Array.isArray(items) ? items : [items];
+    const results: Topic[] = [];
+
+    for (const item of itemArray) {
+      const rawTitle = extractText(item.title);
+      const rawLink = extractText(item.link || item.guid);
+      const rawSummary = extractText(item.description || "");
+      const rawDate = extractText(item.pubDate);
+      const rawSource = extractText(item.source);
+
+      const title = cleanHtmlTags(rawTitle);
+      const link = rawLink.trim();
+      const summary = cleanHtmlTags(rawSummary).slice(0, 400);
+      const sourceName = rawSource ? cleanHtmlTags(rawSource) : "Web Search";
+
+      if (!title || !link || !link.startsWith("http")) continue;
+
+      results.push({
+        title,
+        url: link,
+        summary: summary || title,
+        publishedAt: rawDate ? new Date(rawDate).toISOString() : new Date().toISOString(),
+        source: sourceName,
+        topicKey: topicKey(title, link),
+      });
+    }
+
+    return results.slice(0, 6);
+  } catch {
+    return [];
+  }
 }
 
 // ─── HN Algolia ──────────────────────────────────────────────────────────────
@@ -326,7 +421,7 @@ export async function discoverFromArxiv(
       let paperUrl = rawId;
       if (Array.isArray(entry.link)) {
         const htmlLink = entry.link.find(
-          (l) => l["@_type"] === "text/html" || l["@_href"]?.includes("abs")
+          (l: Record<string, string>) => l["@_type"] === "text/html" || l["@_href"]?.includes("abs")
         );
         if (htmlLink) paperUrl = htmlLink["@_href"];
       } else if (entry.link && typeof entry.link === "object") {
@@ -357,20 +452,24 @@ export async function discoverFromArxiv(
 // ─── Combined Discovery ───────────────────────────────────────────────────────
 
 /**
- * Discover topics from all sources: HN + ArXiv + 20 Tech News Feeds.
- * Deduplicates by topicKey and orders newest-first.
+ * Discover topics across all channels:
+ * - HN Algolia
+ * - ArXiv cs.CR Research Papers
+ * - 45+ Premier Tech & Cybersecurity News Outlets
+ * - Live Web Search (Google News Web Index)
  */
 export async function discoverTopics(): Promise<Topic[]> {
-  const [hnTopics, arxivTopics, techNewsTopics] = await Promise.all([
+  const [hnTopics, arxivTopics, techNewsTopics, webSearchTopics] = await Promise.all([
     discoverFromHN(),
     discoverFromArxiv("cs.CR"),
     discoverFromTechNews(),
+    discoverFromWebSearch(),
   ]);
 
   const seen = new Set<string>();
   const merged: Topic[] = [];
 
-  for (const topic of [...hnTopics, ...arxivTopics, ...techNewsTopics]) {
+  for (const topic of [...hnTopics, ...arxivTopics, ...techNewsTopics, ...webSearchTopics]) {
     if (seen.has(topic.topicKey)) continue;
     seen.add(topic.topicKey);
     merged.push(topic);
@@ -383,7 +482,7 @@ export async function discoverTopics(): Promise<Topic[]> {
   );
 
   console.log(
-    `[Discovery] Found ${merged.length} unique topics (${hnTopics.length} HN, ${arxivTopics.length} ArXiv, ${techNewsTopics.length} Tech News)`
+    `[Discovery] Found ${merged.length} unique topics (${hnTopics.length} HN, ${arxivTopics.length} ArXiv, ${techNewsTopics.length} Tech Outlets, ${webSearchTopics.length} Web Search)`
   );
 
   return merged;

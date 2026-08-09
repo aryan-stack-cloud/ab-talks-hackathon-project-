@@ -107,7 +107,7 @@ function parsePostContent(raw: string): {
 
 // ─── Components ───────────────────────────────────────────────────────────────
 
-function PostCard({ post }: { post: Post }) {
+function PostCard({ post, isLeadStory = false }: { post: Post; isLeadStory?: boolean }) {
   const [copied, setCopied] = useState(false);
   const parsed = parsePostContent(post.text);
   const primarySource = post.sources && post.sources[0] ? post.sources[0] : null;
@@ -132,9 +132,11 @@ function PostCard({ post }: { post: Post }) {
   };
 
   return (
-    <article className="post-card">
+    <article className={`post-card${isLeadStory ? " lead-story" : ""}`}>
+      {isLeadStory && <div className="lead-badge">★ FRONT PAGE LEAD STORY</div>}
+
       {/* ── Card Meta Header ────────────────────────────────────────────── */}
-      <div className="post-meta">
+      <div className="post-meta" style={{ marginTop: isLeadStory ? "0.5rem" : "0" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <span className="post-author">Mira Voss</span>
           {parsed.sourceName && (
@@ -261,6 +263,10 @@ export default function Home() {
   const [feedLoading, setFeedLoading] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+
+  // Filter & Search State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTopic, setActiveTopic] = useState("ALL");
 
   // Automation / Interval state (in minutes: 1, 2, 5, 10, 60, 300, 1440)
   const [intervalMinutes, setIntervalMinutes] = useState<number>(2);
@@ -423,6 +429,18 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [activeAgentId, fetchFeed]);
 
+  // Filtered posts based on search query & active topic pill
+  const filteredPosts = feedPosts.filter((post) => {
+    const textLower = post.text.toLowerCase();
+    const queryLower = searchQuery.trim().toLowerCase();
+
+    const matchesSearch = queryLower === "" || textLower.includes(queryLower);
+
+    if (!matchesSearch) return false;
+    if (activeTopic === "ALL") return true;
+    return textLower.includes(activeTopic.toLowerCase());
+  });
+
   // Current dateline string
   const datelineStr = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -458,6 +476,35 @@ export default function Home() {
           <span className="newspaper-edition-right">{datelineStr} · {utcTime || "15:50:00 UTC"}</span>
         </div>
       </header>
+
+      {/* ── Editorial Analytics Metrics Strip ────────────────────────────── */}
+      <div className="metrics-strip">
+        <div className="metric-tile">
+          <div className="metric-label">Published Articles</div>
+          <div className="metric-value">{feedPosts.length} Dispatches</div>
+          <div className="metric-sub">✓ Live Feed Active</div>
+        </div>
+
+        <div className="metric-tile">
+          <div className="metric-label">Outlets Monitored</div>
+          <div className="metric-value">45+ Outlets</div>
+          <div className="metric-sub">TechCrunch · Wired · ArXiv</div>
+        </div>
+
+        <div className="metric-tile">
+          <div className="metric-label">Lead AI Researcher</div>
+          <div className="metric-value">Mira Voss</div>
+          <div className="metric-sub">Domain: AI Security</div>
+        </div>
+
+        <div className="metric-tile">
+          <div className="metric-label">Next Auto-Edition</div>
+          <div className="metric-value">{formatCountdown(countdownSeconds)}</div>
+          <div className="metric-sub">
+            {autoTickEnabled ? `Cadence: Every ${formatIntervalLabel(intervalMinutes)}` : "Auto-Post Paused"}
+          </div>
+        </div>
+      </div>
 
       {/* ── Highlighted Initialize Agent Control Desk ─────────────────────── */}
       <section className="control-desk-panel">
@@ -508,9 +555,9 @@ export default function Home() {
               onChange={(e) => setIntervalMinutes(Number(e.target.value))}
               style={{
                 width: "100%",
-                background: "#fff",
-                border: "2px solid #000",
-                color: "#000",
+                background: "#fffdfa",
+                border: "2px solid #24201c",
+                color: "#1f1c19",
                 fontFamily: "var(--font-mono)",
                 fontSize: "0.875rem",
                 fontWeight: "700",
@@ -532,9 +579,9 @@ export default function Home() {
             id="btn-toggle-autotick"
             className="btn-toggle-autotick"
             style={{
-              borderColor: "#000",
-              background: autoTickEnabled ? "#000" : "#fff",
-              color: autoTickEnabled ? "#00ff9d" : "#000",
+              borderColor: "#24201c",
+              background: autoTickEnabled ? "#24201c" : "#fffdfa",
+              color: autoTickEnabled ? "#a7f3d0" : "#1f1c19",
               minWidth: "160px",
             }}
             onClick={() => setAutoTickEnabled(!autoTickEnabled)}
@@ -579,7 +626,7 @@ export default function Home() {
         )}
       </section>
 
-      {/* ── Agent lookup ────────────────────────────────────────────────── */}
+      {/* ── Agent Lookup ────────────────────────────────────────────────── */}
       <div className="lookup-bar" style={{ marginTop: "1.5rem" }}>
         <input
           id="agent-id-input"
@@ -599,11 +646,36 @@ export default function Home() {
         </button>
       </div>
 
-      {/* ── Feed ────────────────────────────────────────────────────────── */}
+      {/* ── Feed Search & Topic Filter Bar ───────────────────────────────── */}
+      {activeAgentId && (
+        <div className="search-filter-bar">
+          <input
+            className="search-input-box"
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="🔍 Search articles by headline, keyword, or news outlet…"
+          />
+
+          <div className="topic-pills">
+            {["ALL", "AI", "SECURITY", "HARDWARE", "RESEARCH"].map((topic) => (
+              <button
+                key={topic}
+                className={`topic-pill${activeTopic === topic ? " active" : ""}`}
+                onClick={() => setActiveTopic(topic)}
+              >
+                {topic}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Article Feed ────────────────────────────────────────────────── */}
       {activeAgentId && (
         <>
           <div className="feed-header">
-            <span className="feed-title">Research Feed</span>
+            <span className="feed-title">Research Dispatches</span>
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               {lastRefresh && (
                 <span
@@ -615,7 +687,7 @@ export default function Home() {
               )}
               {!feedLoading && (
                 <span className="feed-count">
-                  {feedPosts.length} article{feedPosts.length !== 1 ? "s" : ""}
+                  {filteredPosts.length} article{filteredPosts.length !== 1 ? "s" : ""}
                 </span>
               )}
             </div>
@@ -625,19 +697,19 @@ export default function Home() {
             <div className="init-result error">Error: {feedError}</div>
           )}
 
-          {!feedLoading && !feedError && feedPosts.length === 0 && (
+          {!feedLoading && !feedError && filteredPosts.length === 0 && (
             <div className="empty-state">
               <div className="icon">◈</div>
               <p>
-                No articles published yet. Mira is running her first discovery cycle.
+                No matching articles found. Mira is running continuous discovery cycles.
                 <br />
-                The feed auto-refreshes continuously. Check back in a moment.
+                Try clearing search or check back in a moment.
               </p>
             </div>
           )}
 
-          {feedPosts.map((post) => (
-            <PostCard key={post.id} post={post} />
+          {filteredPosts.map((post, idx) => (
+            <PostCard key={post.id} post={post} isLeadStory={idx === 0} />
           ))}
         </>
       )}

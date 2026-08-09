@@ -56,7 +56,7 @@ body {
 
 /* ── Physical Newspaper Sheet Container ──────────────────────────────── */
 .app-shell {
-  max-width: 860px;
+  max-width: 900px;
   margin: 2rem auto;
   padding: 2rem 2.5rem 4rem;
   background: var(--surface);
@@ -147,34 +147,45 @@ body {
   font-weight: 700;
 }
 
-.cipher-badge {
+/* ── Editorial Analytics Metrics Strip ──────────────────────────────── */
+.metrics-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.metric-tile {
+  background: #fffdfa;
+  border: 2px solid var(--border);
+  padding: 1rem 1.25rem;
+  box-shadow: 3px 3px 0px var(--border);
+}
+
+.metric-label {
+  font-family: var(--font-mono);
+  font-size: 0.675rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.metric-value {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.metric-sub {
   font-family: var(--font-mono);
   font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #24201c;
-  background: #e2d9ca;
-  border: 1px solid #24201c;
-  padding: 0.2rem 0.6rem;
-}
-
-.status-line {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  font-size: 0.75rem;
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-}
-
-.status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 4px var(--green);
+  color: var(--green);
+  font-weight: 700;
+  margin-top: 0.25rem;
 }
 
 /* ── Highlighted Control Desk Panels ─────────────────────────────────── */
@@ -245,7 +256,7 @@ body {
   text-transform: uppercase;
 }
 
-/* Soft & Creamy High-Visibility Action Buttons */
+/* Action Buttons */
 .btn-init-highlight {
   background: #24201c;
   color: #a7f3d0;
@@ -329,15 +340,17 @@ body {
 
 .init-result.error { color: var(--red); }
 
-/* ── Agent Lookup ─────────────────────────────────────────────────────── */
-.lookup-bar {
+/* ── Search & Topic Filter Bar ───────────────────────────────────────── */
+.search-filter-bar {
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
 }
 
-.lookup-bar input {
+.search-input-box {
   flex: 1;
+  min-width: 260px;
   background: #fffdfa;
   border: 2px solid var(--border);
   color: var(--text-primary);
@@ -346,27 +359,33 @@ body {
   padding: 0.625rem 0.875rem;
   outline: none;
   font-weight: 600;
+  box-shadow: 2px 2px 0px var(--border);
 }
 
-.btn-secondary {
-  background: #fffdfa;
-  color: var(--text-primary);
-  border: 2px solid var(--border);
+.topic-pills {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.topic-pill {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  padding: 0.625rem 1rem;
+  padding: 0.4rem 0.75rem;
   cursor: pointer;
+  color: var(--text-primary);
+  text-transform: uppercase;
   transition: all var(--transition);
-  white-space: nowrap;
 }
 
-.btn-secondary:hover:not(:disabled) {
+.topic-pill.active, .topic-pill:hover {
   background: var(--border);
   color: var(--surface);
 }
-
-.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Printed Newspaper Article Cards ─────────────────────────────────── */
 .feed-header {
@@ -402,6 +421,27 @@ body {
   box-shadow: 4px 4px 0px var(--border);
   transition: transform var(--transition);
   position: relative;
+}
+
+.post-card.lead-story {
+  border: 3px solid var(--border);
+  box-shadow: 6px 6px 0px var(--border);
+  background: #fffefb;
+}
+
+.lead-badge {
+  position: absolute;
+  top: -12px;
+  left: 20px;
+  background: #24201c;
+  color: #fde047;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--border);
 }
 
 .post-card:hover {
@@ -661,7 +701,7 @@ body {
   .app-shell { padding: 1.25rem 1rem 3rem; margin: 0 auto; }
   .form-row { flex-direction: column; }
   .btn-init-highlight, .btn-trigger-highlight { align-self: stretch; text-align: center; }
-  .lookup-bar { flex-direction: column; }
+  .search-filter-bar { flex-direction: column; }
   .post-footer { flex-direction: column; align-items: stretch; }
   .post-headline { font-size: 1.35rem; }
   .newspaper-title { font-size: 2.25rem; }

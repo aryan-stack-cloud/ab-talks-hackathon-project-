@@ -105,7 +105,7 @@ GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-3.5-flash-lite
 DATABASE_URL=postgresql://database_password.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 CRON_SECRET= cron_secret
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=https://ab-talks-hackathon-project.vercel.app/
 ```
 
 ### 3. Run Database Migrations
@@ -117,7 +117,7 @@ npm run db:push
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open https://ab-talks-hackathon-project.vercel.app/ in your browser.
 
 ---
 

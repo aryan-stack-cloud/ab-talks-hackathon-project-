@@ -147,3 +147,8 @@ This document records all user instructions, directives, and feature requests pr
 
 ## 29. Complete Editorial Dashboard Enhancement
 > "improve the dashboard design"
+
+---
+
+## 30. Vercel Build Trace Authorization & Deployment Probe Fix
+> "deployment is failing to vercel see [Vercel deployment failure logs screenshot]"

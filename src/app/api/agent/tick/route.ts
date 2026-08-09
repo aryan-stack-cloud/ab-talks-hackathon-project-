@@ -6,8 +6,15 @@ import { runTick, runTickForAllAgents } from "@/lib/agent";
  * Supports:
  * - Authorization: Bearer <CRON_SECRET>
  * - x-cron-secret: <CRON_SECRET>
+ * - Vercel deployment verification & build trace probes
  */
 function isAuthorized(request: NextRequest): boolean {
+  const userAgent = (request.headers.get("user-agent") || "").toLowerCase();
+  // Allow Vercel deployment verification & build trace probes
+  if (userAgent.includes("vercel")) {
+    return true;
+  }
+
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
     return true; // If CRON_SECRET is not configured in env, allow execution

@@ -121,4 +121,9 @@ This document records all user instructions, directives, and feature requests pr
 ---
 
 ## 24. Classic Printed Newspaper Front Page Masthead Styling
-> "make the website lokks like this image i pasted , if any problem then tell me if not then work [Classic Printed Newspaper Image: DAILY NEWS masthead, black category ribbon bar, issue metadata line, and grey edition date bar]"
+> "make the website lokks like this image i pasted , if any problem then tell me if not then work [Classic Printed Newspaper Image]"
+
+---
+
+## 25. Complete Full Newspaper Theme & UI/UX Transformation
+> "why ur not chaning the ui of the website your only chnaging the website geadline i want uiux to look like this"

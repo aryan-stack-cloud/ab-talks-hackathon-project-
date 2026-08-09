@@ -142,3 +142,8 @@ This document records all user instructions, directives, and feature requests pr
 
 ## 28. Instant Initial Post Generation on Agent Initialization
 > "on the clicl of Initialize Mira Voss → it should instantly generate the first post then it can go for the automation"
+
+---
+
+## 29. Complete Editorial Dashboard Enhancement
+> "improve the dashboard design"

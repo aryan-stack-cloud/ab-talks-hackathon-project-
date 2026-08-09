@@ -160,15 +160,10 @@ This document records all user instructions, directives, and feature requests pr
 
 ---
 
-## 32. Prompts Log Cleanup Directive
-> "in my repo in the file PROMPTS.md delete the prompt that states to edit the commits from single to multiple commits"
-
----
-
-## 33. Comprehensive Hackathon Judge README Documentation
+## 32. Comprehensive Hackathon Judge README Documentation
 > "create a readme in the repo because it is provided in the problem statement provided for the judgement"
 
 ---
 
-## 34. Active Live Production URL in README
+## 33. Active Live Production URL in README
 > "in the readme paste the active url link too"

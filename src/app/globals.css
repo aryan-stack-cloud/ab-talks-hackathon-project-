@@ -1,6 +1,6 @@
 /* ──────────────────────────────────────────────────────────────────────────
-   Mira Voss — Authentic Printed Newspaper UI/UX Design System
-   Inspired by physical front-page newsprint publications
+   Mira Voss — Soft & Creamy Vintage Newsprint UI/UX Design System
+   Warm parchment tone, soft charcoal ink, and authentic newspaper styling
    ────────────────────────────────────────────────────────────────────────── */
 
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
@@ -8,24 +8,24 @@
 /* ── Reset ────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Design Tokens (Authentic Print Newsprint Palette) ───────────────── */
+/* ── Design Tokens (Soft & Creamy Warm Newsprint Palette) ─────────────── */
 :root {
-  --bg:           #efece6;       /* Authentic newsprint off-white page background */
-  --surface:      #f7f5f0;       /* Crisp white/newsprint paper sheet surface */
-  --surface-2:    #e8e4dc;       /* Newspaper inset section grey */
-  --border:       #111111;       /* Deep dark ink borders */
-  --border-muted: #888888;
+  --bg:           #f4efe6;       /* Soft, warm creamy parchment page background */
+  --surface:      #fcf8f2;       /* Warm creamy paper sheet surface */
+  --surface-2:    #eee7d8;       /* Soft warm cream section inset */
+  --border:       #24201c;       /* Warm dark charcoal ink borders */
+  --border-muted: #9c9388;
 
-  --accent:       #111111;       /* Deep black headline ink */
-  --accent-blue:  #0055aa;       /* Classic newspaper link blue */
-  --accent-gold:  #d4af37;       /* Highlight gold accent */
+  --accent:       #1f1c19;       /* Deep warm dark ink */
+  --accent-blue:  #1d4ed8;       /* Soft newspaper link blue */
+  --accent-gold:  #b45309;       /* Soft warm amber highlight */
 
-  --text-primary: #111111;       /* Solid black newsprint ink */
-  --text-secondary:#333333;       /* Charcoal body text */
-  --text-muted:   #555555;
+  --text-primary: #1f1c19;       /* Soft dark charcoal ink (no harsh pure black) */
+  --text-secondary:#443f38;       /* Soft warm charcoal body text */
+  --text-muted:   #6b6359;
 
-  --green:        #007733;
-  --red:          #bb0000;
+  --green:        #047857;       /* Soft deep emerald green */
+  --red:          #b91c1c;
 
   --font-serif:   'Playfair Display', Georgia, serif;
   --font-body:    'Newsreader', Georgia, serif;
@@ -44,7 +44,7 @@ html { font-size: 16px; scroll-behavior: smooth; }
 
 body {
   background-color: var(--bg);
-  background-image: radial-gradient(#d5cfc4 0.75px, transparent 0.75px);
+  background-image: radial-gradient(#dfd7ca 0.75px, transparent 0.75px);
   background-size: 16px 16px;
   color: var(--text-primary);
   font-family: var(--font-body);
@@ -61,7 +61,7 @@ body {
   padding: 2rem 2.5rem 4rem;
   background: var(--surface);
   border: 2px solid var(--border);
-  box-shadow: 0 12px 48px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 12px 40px rgba(60,40,20,0.08), 0 2px 8px rgba(60,40,20,0.05);
 }
 
 /* ── Newspaper Front Page Masthead ───────────────────────────────────── */
@@ -86,16 +86,16 @@ body {
 
 /* Black Inverted Category Ribbon Bar */
 .newspaper-category-ribbon {
-  background: #000;
-  color: #fff;
+  background: #24201c;
+  color: #fcf8f2;
   font-family: var(--font-serif);
   font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   padding: 0.5rem 1rem;
   text-transform: uppercase;
-  border-top: 2px solid #000;
-  border-bottom: 2px solid #000;
+  border-top: 2px solid #24201c;
+  border-bottom: 2px solid #24201c;
   word-spacing: 0.15em;
 }
 
@@ -153,9 +153,9 @@ body {
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #000;
-  background: #e0e0e0;
-  border: 1px solid #000;
+  color: #24201c;
+  background: #e2d9ca;
+  border: 1px solid #24201c;
   padding: 0.2rem 0.6rem;
 }
 
@@ -179,11 +179,11 @@ body {
 
 /* ── Highlighted Control Desk Panels ─────────────────────────────────── */
 .control-desk-panel {
-  background: #fff;
-  border: 3px solid #000;
+  background: #fffdfa;
+  border: 3px solid var(--border);
   padding: 1.75rem;
   margin-bottom: 1.75rem;
-  box-shadow: 5px 5px 0px #000;
+  box-shadow: 5px 5px 0px var(--border);
   position: relative;
 }
 
@@ -191,7 +191,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 2px solid #000;
+  border-bottom: 2px solid var(--border);
   padding-bottom: 0.5rem;
   margin-bottom: 0.75rem;
 }
@@ -202,7 +202,7 @@ body {
   font-weight: 900;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #000;
+  color: var(--text-primary);
 }
 
 .control-desk-badge {
@@ -210,8 +210,8 @@ body {
   font-size: 0.7rem;
   font-weight: 800;
   text-transform: uppercase;
-  background: #000;
-  color: #fff;
+  background: var(--border);
+  color: var(--surface);
   padding: 0.2rem 0.6rem;
 }
 
@@ -238,62 +238,62 @@ body {
   display: block;
   font-size: 0.75rem;
   font-family: var(--font-mono);
-  color: #000;
+  color: var(--text-primary);
   margin-bottom: 0.375rem;
   letter-spacing: 0.05em;
   font-weight: 800;
   text-transform: uppercase;
 }
 
-/* High Visibility Action Buttons */
+/* Soft & Creamy High-Visibility Action Buttons */
 .btn-init-highlight {
-  background: #000;
-  color: #00ff9d;
-  border: 2px solid #000;
+  background: #24201c;
+  color: #a7f3d0;
+  border: 2px solid #24201c;
   font-family: var(--font-sans);
   font-size: 0.9375rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   padding: 0.75rem 1.75rem;
   cursor: pointer;
-  box-shadow: 3px 3px 0px #007733;
+  box-shadow: 3px 3px 0px #047857;
   transition: all var(--transition);
   white-space: nowrap;
 }
 
 .btn-init-highlight:hover:not(:disabled) {
-  background: #007733;
+  background: #047857;
   color: #fff;
   transform: translateY(-2px);
-  box-shadow: 4px 4px 0px #000;
+  box-shadow: 4px 4px 0px #24201c;
 }
 
 .btn-trigger-highlight {
-  background: #000;
-  color: #ffd700;
-  border: 2px solid #000;
+  background: #24201c;
+  color: #fde047;
+  border: 2px solid #24201c;
   font-family: var(--font-sans);
   font-size: 0.875rem;
   font-weight: 800;
   letter-spacing: 0.03em;
   padding: 0.625rem 1.25rem;
   cursor: pointer;
-  box-shadow: 3px 3px 0px #111;
+  box-shadow: 3px 3px 0px #24201c;
   transition: all var(--transition);
   white-space: nowrap;
 }
 
 .btn-trigger-highlight:hover:not(:disabled) {
-  background: #ffd700;
-  color: #000;
+  background: #b45309;
+  color: #fff;
   transform: translateY(-2px);
-  box-shadow: 4px 4px 0px #000;
+  box-shadow: 4px 4px 0px #24201c;
 }
 
 .btn-toggle-autotick {
-  background: #fff;
-  color: #000;
-  border: 2px solid #000;
+  background: #fffdfa;
+  color: var(--text-primary);
+  border: 2px solid var(--border);
   font-family: var(--font-mono);
   font-size: 0.8125rem;
   font-weight: 800;
@@ -304,8 +304,8 @@ body {
 }
 
 .btn-toggle-autotick:hover:not(:disabled) {
-  background: #000;
-  color: #fff;
+  background: var(--border);
+  color: var(--surface);
 }
 
 .btn-primary:disabled,
@@ -318,8 +318,8 @@ body {
 .init-result {
   margin-top: 1rem;
   padding: 0.75rem 1rem;
-  background: #fff;
-  border: 2px solid #000;
+  background: #fffdfa;
+  border: 2px solid var(--border);
   font-family: var(--font-mono);
   font-size: 0.8125rem;
   color: var(--green);
@@ -338,7 +338,7 @@ body {
 
 .lookup-bar input {
   flex: 1;
-  background: #fff;
+  background: #fffdfa;
   border: 2px solid var(--border);
   color: var(--text-primary);
   font-family: var(--font-mono);
@@ -349,7 +349,7 @@ body {
 }
 
 .btn-secondary {
-  background: #fff;
+  background: #fffdfa;
   color: var(--text-primary);
   border: 2px solid var(--border);
   font-family: var(--font-mono);
@@ -362,8 +362,8 @@ body {
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #000;
-  color: #fff;
+  background: var(--border);
+  color: var(--surface);
 }
 
 .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -395,18 +395,18 @@ body {
 }
 
 .post-card {
-  background: #fff;
+  background: #fffdfa;
   border: 2px solid var(--border);
   padding: 2rem;
   margin-bottom: 2.5rem;
-  box-shadow: 4px 4px 0px #111;
+  box-shadow: 4px 4px 0px var(--border);
   transition: transform var(--transition);
   position: relative;
 }
 
 .post-card:hover {
   transform: translateY(-2px);
-  box-shadow: 6px 6px 0px #111;
+  box-shadow: 6px 6px 0px var(--border);
 }
 
 .post-meta {
@@ -434,8 +434,8 @@ body {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #fff;
-  background: #000;
+  color: var(--surface);
+  background: var(--border);
   padding: 0.15rem 0.5rem;
 }
 
@@ -479,7 +479,7 @@ body {
 /* Executive Threat Takeaway Quote Box */
 .post-takeaway-box {
   background: var(--surface-2);
-  border-left: 4px solid #000;
+  border-left: 4px solid var(--border);
   padding: 1rem 1.25rem;
   margin-bottom: 1.25rem;
   border-top: 1px solid var(--border-muted);
@@ -524,7 +524,7 @@ body {
 }
 
 .bullet-icon {
-  color: #000;
+  color: var(--border);
   font-size: 0.75rem;
   margin-top: 0.25rem;
   flex-shrink: 0;
@@ -586,21 +586,21 @@ body {
   font-size: 0.75rem;
   font-family: var(--font-mono);
   font-weight: 700;
-  color: #fff;
-  background: #000;
-  border: 2px solid #000;
+  color: var(--surface);
+  background: var(--border);
+  border: 2px solid var(--border);
   padding: 0.375rem 0.875rem;
   text-decoration: none;
   transition: all var(--transition);
 }
 
 .source-link-btn:hover {
-  background: #fff;
-  color: #000;
+  background: var(--surface);
+  color: var(--border);
 }
 
 .copy-btn {
-  background: #fff;
+  background: var(--surface);
   border: 2px solid var(--border);
   color: var(--text-primary);
   font-family: var(--font-mono);
@@ -612,8 +612,8 @@ body {
 }
 
 .copy-btn:hover {
-  background: #000;
-  color: #fff;
+  background: var(--border);
+  color: var(--surface);
 }
 
 /* ── Empty states ─────────────────────────────────────────────────────── */
@@ -640,8 +640,8 @@ body {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid #ccc;
-  border-top-color: #000;
+  border: 2px solid #aaa;
+  border-top-color: var(--border);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -653,8 +653,8 @@ body {
 /* ── Scrollbar ────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: #bbb; }
-::-webkit-scrollbar-thumb:hover { background: #888; }
+::-webkit-scrollbar-thumb { background: #c5bdae; }
+::-webkit-scrollbar-thumb:hover { background: #9c9388; }
 
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 600px) {

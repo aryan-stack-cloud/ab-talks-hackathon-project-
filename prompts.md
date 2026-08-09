@@ -87,3 +87,8 @@ This document records all user instructions, directives, and feature requests pr
 
 ## 17. Shared Credential & Vercel Deployment Selection
 > "what i want is they will also use the same api key as mine all other things from the env local , can we push it to github"
+
+---
+
+## 18. Vercel Deployment Not Found Error Resolution
+> "04: NOT_FOUND Code: DEPLOYMENT_NOT_FOUND ID: bom1::2rzz7-1786269505673-76af607f192f This deployment cannot be found."

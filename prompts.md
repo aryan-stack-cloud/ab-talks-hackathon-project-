@@ -92,3 +92,8 @@ This document records all user instructions, directives, and feature requests pr
 
 ## 18. Vercel Deployment Not Found Error Resolution
 > "04: NOT_FOUND Code: DEPLOYMENT_NOT_FOUND ID: bom1::2rzz7-1786269505673-76af607f192f This deployment cannot be found."
+
+---
+
+## 19. Vercel Hobby Tier Cron Schedule Fix
+> "Hobby accounts are limited to daily cron jobs. This cron expression ("*/2 * * * *") would run more than once per day. Upgrade to the Pro plan to unlock all Cron Jobs features on Vercel."

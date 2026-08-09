@@ -157,3 +157,8 @@ This document records all user instructions, directives, and feature requests pr
 
 ## 31. Vercel Deployment Output Verification Log
 > "still same the same error 16:45:41.306 Running build ... Build Completed in /vercel/output [42s] ... Deploying outputs..."
+
+---
+
+## 32. Vercel Production Domain Assignment Directive
+> "showing this thing [ab-talks-hackathon-project.vercel.app No Deployment screenshot]"

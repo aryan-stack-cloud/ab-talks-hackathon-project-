@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,6 +36,12 @@ function truncateUrl(url: string, max = 52): string {
   } catch {
     return url.slice(0, max) + "…";
   }
+}
+
+function formatCountdown(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
 // ─── Components ───────────────────────────────────────────────────────────────
@@ -96,33 +102,17 @@ export default function Home() {
   const [feedError, setFeedError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  // Automation / Interval state
+  const [intervalMinutes, setIntervalMinutes] = useState<number>(2);
+  const [autoTickEnabled, setAutoTickEnabled] = useState<boolean>(true);
+  const [tickLoading, setTickLoading] = useState<boolean>(false);
+  const [tickStatus, setTickStatus] = useState<string | null>(null);
+  const [countdownSeconds, setCountdownSeconds] = useState<number>(120);
 
-  const handleInit = async () => {
-    setInitLoading(true);
-    setInitResult(null);
+  const activeAgentIdRef = useRef<string | null>(null);
+  activeAgentIdRef.current = activeAgentId;
 
-    try {
-      const res = await fetch("/api/agent/init", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          persona: { name: "Mira Voss", domain: "AI Security" },
-        }),
-      });
-      const data = (await res.json()) as { agentId?: string; error?: string };
-      setInitResult(data);
-
-      if (data.agentId) {
-        setAgentIdInput(data.agentId);
-        setActiveAgentId(data.agentId);
-      }
-    } catch (err) {
-      setInitResult({ error: String(err) });
-    } finally {
-      setInitLoading(false);
-    }
-  };
+  // ── Feed Fetcher ────────────────────────────────────────────────────────────
 
   const fetchFeed = useCallback(async (agentId: string) => {
     setFeedLoading(true);
@@ -152,6 +142,78 @@ export default function Home() {
     }
   }, []);
 
+  // ── Auto Tick Handler ──────────────────────────────────────────────────────
+
+  const runAutoTick = useCallback(
+    async (agentId: string) => {
+      setTickLoading(true);
+      setTickStatus("Running autonomous discovery & post generation cycle...");
+
+      try {
+        const res = await fetch("/api/agent/auto-tick", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agentId }),
+        });
+
+        const data = (await res.json()) as {
+          ok?: boolean;
+          result?: { published: number; judged: number };
+          error?: string;
+        };
+
+        if (data.ok && data.result) {
+          const count = data.result.published;
+          setTickStatus(
+            count > 0
+              ? `Published ${count} new post!`
+              : `Tick complete (${data.result.judged} evaluated — no new publishable topic)`
+          );
+        } else if (data.error) {
+          setTickStatus(`Tick note: ${data.error}`);
+        }
+
+        // Fetch feed immediately to display any newly published post
+        await fetchFeed(agentId);
+      } catch (err) {
+        console.error("Auto tick error:", err);
+        setTickStatus("Tick cycle complete");
+      } finally {
+        setTickLoading(false);
+      }
+    },
+    [fetchFeed]
+  );
+
+  // ── Init & Lookup Handlers ─────────────────────────────────────────────────
+
+  const handleInit = async () => {
+    setInitLoading(true);
+    setInitResult(null);
+
+    try {
+      const res = await fetch("/api/agent/init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          persona: { name: "Mira Voss", domain: "AI Security" },
+        }),
+      });
+      const data = (await res.json()) as { agentId?: string; error?: string };
+      setInitResult(data);
+
+      if (data.agentId) {
+        setAgentIdInput(data.agentId);
+        setActiveAgentId(data.agentId);
+        fetchFeed(data.agentId);
+      }
+    } catch (err) {
+      setInitResult({ error: String(err) });
+    } finally {
+      setInitLoading(false);
+    }
+  };
+
   const handleLookup = () => {
     const id = agentIdInput.trim();
     if (!id) return;
@@ -159,14 +221,45 @@ export default function Home() {
     fetchFeed(id);
   };
 
-  // Auto-refresh every 15 seconds when an agent is active
+  const handleManualTickNow = () => {
+    if (!activeAgentId) return;
+    runAutoTick(activeAgentId);
+    setCountdownSeconds(intervalMinutes * 60);
+  };
+
+  // Reset countdown when interval changes
+  useEffect(() => {
+    setCountdownSeconds(intervalMinutes * 60);
+  }, [intervalMinutes]);
+
+  // Timer loop: decrement countdown, trigger tick when countdown reaches 0
+  useEffect(() => {
+    if (!autoTickEnabled || !activeAgentId) return;
+
+    const timer = setInterval(() => {
+      setCountdownSeconds((prev) => {
+        if (prev <= 1) {
+          // Trigger tick
+          const currentId = activeAgentIdRef.current;
+          if (currentId) {
+            runAutoTick(currentId);
+          }
+          return intervalMinutes * 60;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [autoTickEnabled, activeAgentId, intervalMinutes, runAutoTick]);
+
+  // Feed auto-refresh background interval (every 10s)
   useEffect(() => {
     if (!activeAgentId) return;
-    fetchFeed(activeAgentId);
 
     const interval = setInterval(() => {
       fetchFeed(activeAgentId);
-    }, 15_000);
+    }, 10_000);
 
     return () => clearInterval(interval);
   }, [activeAgentId, fetchFeed]);
@@ -189,7 +282,7 @@ export default function Home() {
         <div className="status-line">
           <span className="status-dot" />
           <span>
-            Active · Publishes every ~2 min · No human editorial input
+            Active · Configured: Every ~{intervalMinutes} min · No human input required
           </span>
         </div>
       </header>
@@ -199,7 +292,7 @@ export default function Home() {
         <h2>Initialize Agent</h2>
         <p className="init-description">
           Creates a Mira Voss agent and triggers the first autonomous discovery
-          cycle immediately. Returns an agent ID — save it to load the feed.
+          cycle immediately.
         </p>
         <div className="form-row" style={{ marginTop: "1rem" }}>
           <button
@@ -221,8 +314,91 @@ export default function Home() {
         )}
       </section>
 
+      {/* ── Automation Interval Settings ─────────────────────────────────── */}
+      <section className="init-panel" style={{ marginTop: "1rem" }}>
+        <h2>Post Automation & Interval Settings</h2>
+        <p className="init-description">
+          Set the time interval to automatically discover, evaluate, and generate new posts.
+        </p>
+
+        <div className="form-row" style={{ marginTop: "1rem", alignItems: "center" }}>
+          <div className="form-group" style={{ flex: "0 0 200px" }}>
+            <label htmlFor="interval-select">Post Interval</label>
+            <select
+              id="interval-select"
+              value={intervalMinutes}
+              onChange={(e) => setIntervalMinutes(Number(e.target.value))}
+              style={{
+                width: "100%",
+                background: "var(--surface-2)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-md)",
+                color: "var(--text-primary)",
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.875rem",
+                padding: "0.625rem 0.875rem",
+                outline: "none",
+              }}
+            >
+              <option value={1}>Every 1 minute</option>
+              <option value={2}>Every 2 minutes (Default)</option>
+              <option value={5}>Every 5 minutes</option>
+              <option value={10}>Every 10 minutes</option>
+            </select>
+          </div>
+
+          <button
+            id="btn-toggle-autotick"
+            className="btn-secondary"
+            style={{
+              borderColor: autoTickEnabled ? "var(--green)" : "var(--border)",
+              color: autoTickEnabled ? "var(--green)" : "var(--text-muted)",
+              minWidth: "160px",
+            }}
+            onClick={() => setAutoTickEnabled(!autoTickEnabled)}
+            disabled={!activeAgentId}
+          >
+            {autoTickEnabled ? "Auto-Post: ON 🟢" : "Auto-Post: OFF 🔴"}
+          </button>
+
+          <button
+            id="btn-trigger-now"
+            className="btn-primary"
+            onClick={handleManualTickNow}
+            disabled={tickLoading || !activeAgentId}
+          >
+            {tickLoading ? <span className="spinner" /> : "Trigger New Post Now ⚡"}
+          </button>
+        </div>
+
+        {activeAgentId && (
+          <div
+            className="init-result"
+            style={{
+              marginTop: "1rem",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span>
+              {autoTickEnabled
+                ? `🟢 Auto-Post Active (Every ${intervalMinutes}m) — Next run in ${formatCountdown(
+                    countdownSeconds
+                  )}`
+                : "🔴 Auto-Post Paused — click button to resume or trigger manually"}
+            </span>
+            {tickStatus && (
+              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                {tickStatus}
+              </span>
+            )}
+          </div>
+        )}
+      </section>
+
       {/* ── Agent lookup ────────────────────────────────────────────────── */}
-      <div className="lookup-bar">
+      <div className="lookup-bar" style={{ marginTop: "1.5rem" }}>
         <input
           id="agent-id-input"
           type="text"
@@ -273,7 +449,7 @@ export default function Home() {
               <p>
                 No posts yet. Mira is running her first discovery cycle.
                 <br />
-                The feed auto-refreshes every 90s. Check back in a minute.
+                The feed auto-refreshes continuously. Check back in a moment.
               </p>
             </div>
           )}

@@ -458,9 +458,12 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── Init panel ──────────────────────────────────────────────────── */}
-      <section className="init-panel">
-        <h2>Initialize Agent</h2>
+      {/* ── Highlighted Initialize Agent Control Desk ─────────────────────── */}
+      <section className="control-desk-panel">
+        <div className="control-desk-header">
+          <h2 className="control-desk-title">Initialize Agent Desk</h2>
+          <span className="control-desk-badge">STEP 1</span>
+        </div>
         <p className="init-description">
           Creates a Mira Voss agent and triggers the first autonomous discovery
           cycle immediately.
@@ -468,7 +471,7 @@ export default function Home() {
         <div className="form-row" style={{ marginTop: "1rem" }}>
           <button
             id="btn-init-agent"
-            className="btn-primary"
+            className="btn-init-highlight"
             onClick={handleInit}
             disabled={initLoading}
           >
@@ -485,9 +488,12 @@ export default function Home() {
         )}
       </section>
 
-      {/* ── Automation Interval Settings ─────────────────────────────────── */}
-      <section className="init-panel">
-        <h2>Post Automation & Interval Settings</h2>
+      {/* ── Highlighted Post Automation & Interval Settings Desk ───────────── */}
+      <section className="control-desk-panel">
+        <div className="control-desk-header">
+          <h2 className="control-desk-title">Post Automation & Interval Settings</h2>
+          <span className="control-desk-badge">STEP 2</span>
+        </div>
         <p className="init-description">
           Set the time interval to automatically discover, evaluate, and generate structured news articles.
         </p>
@@ -501,12 +507,12 @@ export default function Home() {
               onChange={(e) => setIntervalMinutes(Number(e.target.value))}
               style={{
                 width: "100%",
-                background: "var(--surface-2)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-md)",
-                color: "var(--text-primary)",
+                background: "#fff",
+                border: "2px solid #000",
+                color: "#000",
                 fontFamily: "var(--font-mono)",
                 fontSize: "0.875rem",
+                fontWeight: "700",
                 padding: "0.625rem 0.875rem",
                 outline: "none",
               }}
@@ -523,10 +529,11 @@ export default function Home() {
 
           <button
             id="btn-toggle-autotick"
-            className="btn-secondary"
+            className="btn-toggle-autotick"
             style={{
-              borderColor: autoTickEnabled ? "var(--green)" : "var(--border)",
-              color: autoTickEnabled ? "var(--green)" : "var(--text-muted)",
+              borderColor: "#000",
+              background: autoTickEnabled ? "#000" : "#fff",
+              color: autoTickEnabled ? "#00ff9d" : "#000",
               minWidth: "160px",
             }}
             onClick={() => setAutoTickEnabled(!autoTickEnabled)}
@@ -537,7 +544,7 @@ export default function Home() {
 
           <button
             id="btn-trigger-now"
-            className="btn-primary"
+            className="btn-trigger-highlight"
             onClick={handleManualTickNow}
             disabled={tickLoading || !activeAgentId}
           >

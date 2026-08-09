@@ -12,6 +12,14 @@ interface Post {
   sources: string[];
 }
 
+interface ParsedPost {
+  headline?: string;
+  takeaway?: string;
+  keyPoints?: string[];
+  body?: string;
+  sourceName?: string;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string): string {
@@ -27,59 +35,140 @@ function formatDate(iso: string): string {
   });
 }
 
-function truncateUrl(url: string, max = 52): string {
-  if (url.length <= max) return url;
-  try {
-    const u = new URL(url);
-    const path = u.pathname.slice(0, max - u.hostname.length - 3);
-    return `${u.hostname}${path}…`;
-  } catch {
-    return url.slice(0, max) + "…";
-  }
-}
-
 function formatCountdown(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
+function parsePostContent(raw: string): {
+  headline?: string;
+  takeaway?: string;
+  keyPoints?: string[];
+  paragraphs: string[];
+  sourceName?: string;
+} {
+  try {
+    const parsed = JSON.parse(raw) as ParsedPost;
+    if (parsed.headline || parsed.body) {
+      const paragraphs = (parsed.body || "")
+        .split(/\n\n+/)
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0);
+      return {
+        headline: parsed.headline,
+        takeaway: parsed.takeaway,
+        keyPoints: parsed.keyPoints,
+        paragraphs: paragraphs.length > 0 ? paragraphs : [parsed.body || ""],
+        sourceName: parsed.sourceName,
+      };
+    }
+  } catch {
+    // Fall back to clean paragraph splitting for older plain-text posts
+  }
+
+  const paragraphs = raw
+    .split(/\n\n+/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
+  return {
+    paragraphs: paragraphs.length > 0 ? paragraphs : [raw],
+  };
+}
+
 // ─── Components ───────────────────────────────────────────────────────────────
 
 function PostCard({ post }: { post: Post }) {
+  const [copied, setCopied] = useState(false);
+  const parsed = parsePostContent(post.text);
+
+  const primarySource = post.sources && post.sources[0] ? post.sources[0] : null;
+
+  const handleCopyLink = () => {
+    if (primarySource) {
+      navigator.clipboard.writeText(primarySource);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <article className="post-card">
+      {/* ── Card Meta Header ────────────────────────────────────────────── */}
       <div className="post-meta">
-        <span className="post-author">Mira Voss</span>
-        <span className="post-dot">·</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span className="post-author">Mira Voss</span>
+          {parsed.sourceName && (
+            <span className="source-badge">{parsed.sourceName}</span>
+          )}
+        </div>
         <span className="post-date">{formatDate(post.createdAt)}</span>
       </div>
 
-      <p className="post-text">{post.text}</p>
+      {/* ── Headline ────────────────────────────────────────────────────── */}
+      {parsed.headline && <h3 className="post-headline">{parsed.headline}</h3>}
 
+      {/* ── Executive Threat Takeaway ────────────────────────────────────── */}
+      {parsed.takeaway && (
+        <div className="post-takeaway-box">
+          <div className="post-takeaway-label">Executive Threat Takeaway</div>
+          <p className="post-takeaway-text">{parsed.takeaway}</p>
+        </div>
+      )}
+
+      {/* ── Key Bullet Findings ─────────────────────────────────────────── */}
+      {parsed.keyPoints && parsed.keyPoints.length > 0 && (
+        <ul className="post-keypoints">
+          {parsed.keyPoints.map((point, i) => (
+            <li key={i}>
+              <span className="bullet-icon">◈</span>
+              <span>{point}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* ── Formatted Paragraph Body ───────────────────────────────────── */}
+      <div className="post-body">
+        {parsed.paragraphs.map((paragraph, i) => (
+          <p key={i}>{paragraph}</p>
+        ))}
+      </div>
+
+      {/* ── Editorial Rationale ────────────────────────────────────────── */}
       {post.rationale && (
         <div className="post-rationale">
-          <div className="post-rationale-label">Editorial rationale</div>
+          <div className="post-rationale-label">Mira Voss Editorial Analysis</div>
           <div className="post-rationale-text">{post.rationale}</div>
         </div>
       )}
 
-      {post.sources && post.sources.length > 0 && (
-        <div className="post-sources">
-          {post.sources.map((src, i) => (
-            <a
-              key={i}
-              href={src}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="source-link"
-              title={src}
-            >
-              {truncateUrl(src)}
-            </a>
-          ))}
-        </div>
-      )}
+      {/* ── Action Footer Bar ──────────────────────────────────────────── */}
+      <div className="post-footer">
+        {primarySource ? (
+          <a
+            href={primarySource}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="source-link-btn"
+          >
+            Read Source Article ↗
+          </a>
+        ) : (
+          <div />
+        )}
+
+        {primarySource && (
+          <button
+            className="copy-btn"
+            onClick={handleCopyLink}
+            title="Copy article link"
+          >
+            {copied ? "Copied! 📋" : "Share Link 🔗"}
+          </button>
+        )}
+      </div>
     </article>
   );
 }
@@ -166,14 +255,13 @@ export default function Home() {
           const count = data.result.published;
           setTickStatus(
             count > 0
-              ? `Published ${count} new post!`
+              ? `Published ${count} new article!`
               : `Tick complete (${data.result.judged} evaluated — no new publishable topic)`
           );
         } else if (data.error) {
           setTickStatus(`Tick note: ${data.error}`);
         }
 
-        // Fetch feed immediately to display any newly published post
         await fetchFeed(agentId);
       } catch (err) {
         console.error("Auto tick error:", err);
@@ -239,7 +327,6 @@ export default function Home() {
     const timer = setInterval(() => {
       setCountdownSeconds((prev) => {
         if (prev <= 1) {
-          // Trigger tick
           const currentId = activeAgentIdRef.current;
           if (currentId) {
             runAutoTick(currentId);
@@ -277,7 +364,7 @@ export default function Home() {
           <span>Mira Voss</span>
         </h1>
         <p className="site-subtitle">
-          AI Security Researcher · Autonomous · Powered by Gemini
+          AI Security Researcher · Autonomous News Outlet · Powered by Gemini
         </p>
         <div className="status-line">
           <span className="status-dot" />
@@ -315,10 +402,10 @@ export default function Home() {
       </section>
 
       {/* ── Automation Interval Settings ─────────────────────────────────── */}
-      <section className="init-panel" style={{ marginTop: "1rem" }}>
+      <section className="init-panel">
         <h2>Post Automation & Interval Settings</h2>
         <p className="init-description">
-          Set the time interval to automatically discover, evaluate, and generate new posts.
+          Set the time interval to automatically discover, evaluate, and generate structured news articles.
         </p>
 
         <div className="form-row" style={{ marginTop: "1rem", alignItems: "center" }}>
@@ -433,7 +520,7 @@ export default function Home() {
               )}
               {!feedLoading && (
                 <span className="feed-count">
-                  {feedPosts.length} post{feedPosts.length !== 1 ? "s" : ""}
+                  {feedPosts.length} article{feedPosts.length !== 1 ? "s" : ""}
                 </span>
               )}
             </div>
@@ -447,7 +534,7 @@ export default function Home() {
             <div className="empty-state">
               <div className="icon">◈</div>
               <p>
-                No posts yet. Mira is running her first discovery cycle.
+                No articles published yet. Mira is running her first discovery cycle.
                 <br />
                 The feed auto-refreshes continuously. Check back in a moment.
               </p>
@@ -466,7 +553,7 @@ export default function Home() {
           <p>
             Initialize an agent above to start the autonomous feed,
             <br />
-            or enter an existing agent UUID to load its posts.
+            or enter an existing agent UUID to load its research feed.
           </p>
         </div>
       )}

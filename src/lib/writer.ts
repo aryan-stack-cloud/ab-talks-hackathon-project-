@@ -21,16 +21,22 @@ function validatePostOutput(raw: unknown, sourceUrl: string): PostOutput {
   }
   const obj = raw as Record<string, unknown>;
 
-  if (typeof obj.text !== "string" || obj.text.trim().length < 50) {
-    throw new Error(
-      `Post text is missing or too short (${String(obj.text ?? "").length} chars — need ≥50)`
-    );
+  const headline = typeof obj.headline === "string" ? obj.headline.trim() : "";
+  const takeaway = typeof obj.takeaway === "string" ? obj.takeaway.trim() : "";
+  const bodyText = typeof obj.text === "string" ? obj.text.trim() : "";
+  const rationale = typeof obj.rationale === "string" ? obj.rationale.trim() : "";
+
+  if (!headline && !bodyText) {
+    throw new Error("Post headline and body text are missing");
   }
-  if (typeof obj.rationale !== "string" || obj.rationale.trim().length === 0) {
+  if (!rationale) {
     throw new Error("Post rationale is missing or empty");
   }
 
-  // Sources: use provided array, filtering non-URL strings; fall back to known URL
+  const keyPoints = Array.isArray(obj.keyPoints)
+    ? (obj.keyPoints as unknown[]).filter((k): k is string => typeof k === "string" && k.trim().length > 0)
+    : [];
+
   let sources: string[];
   if (Array.isArray(obj.sources) && obj.sources.length > 0) {
     sources = (obj.sources as unknown[])
@@ -40,14 +46,16 @@ function validatePostOutput(raw: unknown, sourceUrl: string): PostOutput {
     sources = [];
   }
 
-  // Always ensure the canonical source URL is present
   if (!sources.includes(sourceUrl)) {
     sources = [sourceUrl, ...sources];
   }
 
   return {
-    text: obj.text.trim(),
-    rationale: obj.rationale.trim(),
+    headline: headline || "AI Security Intelligence Update",
+    takeaway: takeaway || headline,
+    keyPoints,
+    text: bodyText,
+    rationale,
     sources,
   };
 }
@@ -55,17 +63,8 @@ function validatePostOutput(raw: unknown, sourceUrl: string): PostOutput {
 // ─── Post generation ──────────────────────────────────────────────────────────
 
 /**
- * Generate a post for an accepted topic and insert it into the posts table.
- *
- * Uses Gemini structured JSON output. The output is validated before any
- * DB insert — malformed posts are never persisted.
- *
- * @param candidate         The topic to write about (editorially accepted)
- * @param persona           Mira Voss's full persona config (from DB)
- * @param agentId           UUID of the writing agent
- * @param judgment          The editorial judgment (score + reason, used for context)
- * @param recentRejections  Other topics judged this tick that were rejected
- * @param recentPostSummaries Short summaries of recently published posts (for continuity)
+ * Generate a structured news outlet article post for an accepted topic and insert it into DB.
+ * Output is validated before DB insert — malformed posts are never persisted.
  */
 export async function generatePost(
   candidate: Topic,
@@ -93,83 +92,93 @@ export async function generatePost(
 
   const systemInstruction = `${personaSystemPrompt(persona)}
 
-You are now writing a research post as ${persona.name}.
+You are writing a structured, highly readable research article for ${persona.name}'s AI security publication.
 
 This topic passed editorial review with a score of ${judgment.score}/100.
 Selection reason: ${judgment.reason}
 
-WRITING REQUIREMENTS:
-- Write in ${persona.name}'s voice — technically precise, slightly skeptical, analytical
-- Maximum 300 words; prefer 150–250 words
-- No hashtags, no emojis, no bullet-point lists in the post body — prose only
-- Explain why this topic matters NOW with a concrete technical angle
-- Cite only the source URLs provided in the input — never fabricate URLs
-- Distinguish your interpretation from what the source actually says
-- Do not begin with "I'm excited", "This is huge", or similar openers
-- Avoid passive voice where active is possible
-- The post must stand alone: a reader who has not seen the source should understand the significance
+STRUCTURE REQUIREMENTS:
+1. "headline": Create a bold, compelling, modern news headline (under 12 words).
+2. "takeaway": One executive summary sentence highlighting the core security risk or discovery.
+3. "keyPoints": 2–3 concise bullet takeaways explaining threat implications or technical findings.
+4. "text": 2–3 short, clear, well-spaced analytical paragraphs written in ${persona.name}'s voice.
+5. "rationale": 2–3 sentences explaining why this topic was selected and what angle was taken.
+6. "sources": Include the provided URL.
+
+WRITING CONSTRAINTS:
+- No generic hype or marketing buzzwords ("groundbreaking", "revolutionary", "I'm excited")
+- No emojis, no hashtags
+- Cite the source URL inline or at the end
+- Professional, clean, easy to read for researchers and engineers
 ${rejectionsContext}${continuityContext}`;
 
-  const userContent = `Write a post as ${persona.name} about this topic:
+  const userContent = `Write a structured research article as ${persona.name} for this source:
 
+Source Outlet: ${candidate.source}
 Title: ${candidate.title}
-Source: ${candidate.source}
 Published: ${candidate.publishedAt}
 URL: ${candidate.url}
 Summary: ${candidate.summary}
 
-Use only the URL above as your source. Explain the security significance concretely. Write the post now.`;
+Write the structured article now.`;
 
-  let generated: GeneratedPost;
+  let validated: PostOutput;
 
   try {
     const idxLabel = typeof candidateIndex === "number" ? candidateIndex + 1 : "";
-    console.log(`[Writer] Generating post for candidate ${idxLabel} ("${candidate.title.slice(0, 50)}")`.trim());
+    console.log(
+      `[Writer] Generating post for candidate ${idxLabel} ("${candidate.title.slice(0, 50)}")`.trim()
+    );
 
     const raw = await generateStructured<PostOutput>({
       systemInstruction,
       userContent,
       schema: POST_SCHEMA,
-      temperature: 0.65, // Some creativity for a distinct, non-robotic voice
+      temperature: 0.65,
     });
 
-    const validated = validatePostOutput(raw, candidate.url);
-
-    generated = {
-      text: validated.text,
-      rationale: validated.rationale,
-      sources: validated.sources,
-    };
+    validated = validatePostOutput(raw, candidate.url);
   } catch (err) {
     console.error(
       `[Writer] Post generation failed for "${candidate.title.slice(0, 70)}":`,
       err
     );
-    // Re-throw — the tick caller catches this, counts the error, and continues.
-    // A malformed post is NEVER inserted into the database.
     throw new Error(
       `Post generation failed: ${err instanceof Error ? err.message : String(err)}`
     );
   }
 
+  // Format payload as JSON string so UI can parse headline, takeaway, keyPoints, and body paragraphs!
+  const formattedPayload = JSON.stringify({
+    headline: validated.headline,
+    takeaway: validated.takeaway,
+    keyPoints: validated.keyPoints,
+    body: validated.text,
+    sourceName: candidate.source,
+  });
+
   // ── Insert into posts table ───────────────────────────────────────────────
   try {
     await db.insert(posts).values({
       agentId,
-      text: generated.text,
-      rationale: generated.rationale,
-      sources: generated.sources,
+      text: formattedPayload,
+      rationale: validated.rationale,
+      sources: validated.sources,
       createdAt: new Date(),
     });
 
-    const wordCount = generated.text.split(/\s+/).length;
+    const wordCount = validated.text.split(/\s+/).length;
     console.log(
-      `[Writer] Post inserted — "${candidate.title.slice(0, 60)}" (${wordCount} words)`
+      `[Writer] Structured post inserted — "${validated.headline}" (${wordCount} words)`
     );
   } catch (dbErr) {
     console.error("[Writer] DB insert failed:", dbErr);
     throw dbErr;
   }
 
-  return generated;
+  return {
+    text: formattedPayload,
+    rationale: validated.rationale,
+    sources: validated.sources,
+  };
 }

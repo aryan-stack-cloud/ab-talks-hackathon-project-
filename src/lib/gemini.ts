@@ -74,16 +74,28 @@ export const BATCH_JUDGMENT_SCHEMA = {
 };
 
 /**
- * Schema for post generation output.
- * { text: string, rationale: string, sources: string[] }
+ * Schema for structured news article post generation output.
  */
 export const POST_SCHEMA = {
   type: Type.OBJECT,
   properties: {
+    headline: {
+      type: Type.STRING,
+      description: "Compelling, bold news headline summarizing the core research finding.",
+    },
+    takeaway: {
+      type: Type.STRING,
+      description: "One-sentence executive summary / core threat takeaway.",
+    },
+    keyPoints: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+      description: "2–3 key bullet takeaways or technical threat implications.",
+    },
     text: {
       type: Type.STRING,
       description:
-        "Full post text in Mira Voss's voice. No hashtags. No emojis. Under 300 words.",
+        "Full post prose analysis in Mira Voss's analytical voice (2–3 short, clear, well-spaced paragraphs).",
     },
     rationale: {
       type: Type.STRING,
@@ -96,7 +108,7 @@ export const POST_SCHEMA = {
       description: "Source URLs cited — only use URLs provided in the input.",
     },
   },
-  required: ["text", "rationale", "sources"],
+  required: ["headline", "takeaway", "keyPoints", "text", "rationale", "sources"],
 };
 
 // ─── Typed output interfaces ──────────────────────────────────────────────────
@@ -113,6 +125,9 @@ export interface BatchJudgmentOutput {
 }
 
 export interface PostOutput {
+  headline: string;
+  takeaway: string;
+  keyPoints: string[];
   text: string;
   rationale: string;
   sources: string[];

@@ -46,9 +46,25 @@ function formatDate(iso: string): string {
 }
 
 function formatCountdown(seconds: number): string {
-  const m = Math.floor(seconds / 60);
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
+
+  if (h > 0) {
+    return `${h.toString().padStart(2, "0")}:${m
+      .toString()
+      .padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  }
+
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
+
+function formatIntervalLabel(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`;
+  if (minutes === 60) return "1 hr";
+  if (minutes === 300) return "5 hr";
+  if (minutes === 1440) return "1 day (24h)";
+  return `${minutes} min`;
 }
 
 function parsePostContent(raw: string): {
@@ -210,6 +226,27 @@ function PostCard({ post }: { post: Post }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function Home() {
+  // Live UTC Clock State for Publication Masthead
+  const [utcTime, setUtcTime] = useState<string>("");
+
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      setUtcTime(
+        now.toLocaleTimeString("en-US", {
+          timeZone: "UTC",
+          hour12: false,
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }) + " UTC"
+      );
+    };
+    updateClock();
+    const timer = setInterval(updateClock, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Init form state
   const [initLoading, setInitLoading] = useState(false);
   const [initResult, setInitResult] = useState<{
@@ -225,7 +262,7 @@ export default function Home() {
   const [feedError, setFeedError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
-  // Automation / Interval state
+  // Automation / Interval state (in minutes: 1, 2, 5, 10, 60, 300, 1440)
   const [intervalMinutes, setIntervalMinutes] = useState<number>(2);
   const [autoTickEnabled, setAutoTickEnabled] = useState<boolean>(true);
   const [tickLoading, setTickLoading] = useState<boolean>(false);
@@ -385,27 +422,43 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [activeAgentId, fetchFeed]);
 
+  // Current dateline string
+  const datelineStr = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).toUpperCase();
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="app-shell">
-      {/* ── Header ──────────────────────────────────────────────────────── */}
-      <header className="site-header">
+      {/* ── Newspaper Top Utility Bar ────────────────────────────────────── */}
+      <div className="masthead-top-bar">
+        <span className="masthead-dateline">{datelineStr}</span>
+        <span className="masthead-edition">GLOBAL EDITION · VOL. XXIV · NO. 88</span>
+        <span className="masthead-clock">{utcTime || "UTC CLOCK"}</span>
+      </div>
+
+      {/* ── Publication Masthead Header ───────────────────────────────────── */}
+      <header className="site-header masthead-header">
         <div className="header-top">
-          <span className="cipher-badge">Autonomous Agent</span>
+          <span className="cipher-badge">Autonomous News Publication</span>
         </div>
-        <h1 className="site-title">
-          <span>Mira Voss</span>
+        <h1 className="site-title masthead-title">
+          <span>THE MIRA VOSS DISPATCH</span>
         </h1>
-        <p className="site-subtitle">
-          AI Security Researcher · Autonomous News Outlet · Powered by Gemini
+        <p className="site-subtitle masthead-subtitle">
+          Autonomous AI Security Research & Threat Intelligence Feed · Powered by Gemini
         </p>
-        <div className="status-line">
+        <div className="status-line masthead-status">
           <span className="status-dot" />
           <span>
-            Active · Configured: Every ~{intervalMinutes} min · No human input required
+            LIVE · Scanning 45+ Premier Outlets · Post Interval: Every ~{formatIntervalLabel(intervalMinutes)}
           </span>
         </div>
+        <div className="masthead-double-rule" style={{ marginTop: "1.25rem", marginBottom: "0" }} />
       </header>
 
       {/* ── Init panel ──────────────────────────────────────────────────── */}
@@ -443,8 +496,8 @@ export default function Home() {
         </p>
 
         <div className="form-row" style={{ marginTop: "1rem", alignItems: "center" }}>
-          <div className="form-group" style={{ flex: "0 0 200px" }}>
-            <label htmlFor="interval-select">Post Interval</label>
+          <div className="form-group" style={{ flex: "0 0 220px" }}>
+            <label htmlFor="interval-select">Post Interval Cadence</label>
             <select
               id="interval-select"
               value={intervalMinutes}
@@ -465,6 +518,9 @@ export default function Home() {
               <option value={2}>Every 2 minutes (Default)</option>
               <option value={5}>Every 5 minutes</option>
               <option value={10}>Every 10 minutes</option>
+              <option value={60}>Every 1 hour</option>
+              <option value={300}>Every 5 hours</option>
+              <option value={1440}>Every 1 day (24 hours)</option>
             </select>
           </div>
 
@@ -504,9 +560,9 @@ export default function Home() {
           >
             <span>
               {autoTickEnabled
-                ? `🟢 Auto-Post Active (Every ${intervalMinutes}m) — Next run in ${formatCountdown(
-                    countdownSeconds
-                  )}`
+                ? `🟢 Auto-Post Active (Every ${formatIntervalLabel(
+                    intervalMinutes
+                  )}) — Next run in ${formatCountdown(countdownSeconds)}`
                 : "🔴 Auto-Post Paused — click button to resume or trigger manually"}
             </span>
             {tickStatus && (

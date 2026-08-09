@@ -58,18 +58,75 @@ body {
   padding: 0 1.5rem 3rem;
 }
 
-/* ── Header ───────────────────────────────────────────────────────────── */
-.site-header {
-  padding: 2.5rem 0 2rem;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 2.5rem;
-}
-
-.header-top {
+/* ── Publication Masthead & Top Edition Bar ──────────────────────────── */
+.masthead-top-bar {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.masthead-dateline {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.masthead-edition {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.masthead-clock {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.masthead-header {
+  padding: 1.75rem 0 1.5rem;
+  text-align: center;
+  border-bottom: none;
+  margin-bottom: 2rem;
+}
+
+.masthead-header .header-top {
+  justify-content: center;
+}
+
+.masthead-title {
+  font-size: 2.25rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  margin-top: 0.5rem;
+  line-height: 1.15;
+}
+
+.masthead-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.35rem;
+  font-weight: 400;
+}
+
+.masthead-status {
+  justify-content: center;
+  margin-top: 0.875rem;
+}
+
+.masthead-double-rule {
+  height: 3px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--accent)66;
+  width: 100%;
+  margin-bottom: 1rem;
 }
 
 .cipher-badge {
@@ -89,23 +146,6 @@ body {
 @keyframes pulse-border {
   0%, 100% { border-color: var(--accent)44; }
   50%       { border-color: var(--accent)99; }
-}
-
-.site-title {
-  font-size: 1.875rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
-  line-height: 1.2;
-}
-
-.site-title span { color: var(--accent); }
-
-.site-subtitle {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-top: 0.5rem;
-  font-weight: 300;
 }
 
 .status-line {
@@ -132,7 +172,7 @@ body {
   50%       { opacity: 0.3; }
 }
 
-/* ── Init form ────────────────────────────────────────────────────────── */
+/* ── Init panel ────────────────────────────────────────────────────────── */
 .init-panel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -581,4 +621,6 @@ body::after {
   .lookup-bar { flex-direction: column; }
   .post-footer { flex-direction: column; align-items: stretch; }
   .post-headline { font-size: 1.25rem; }
+  .masthead-title { font-size: 1.6rem; }
+  .masthead-top-bar { flex-direction: column; text-align: center; }
 }

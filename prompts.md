@@ -112,3 +112,13 @@ This document records all user instructions, directives, and feature requests pr
 
 ## 22. Publication Masthead & Edition Bar Feature Selection
 > "Publication Masthead & Edition Bar: (no code for now)"
+
+---
+
+## 23. Publication Masthead Implementation & Expanded Post Intervals (1m, 2m, 5m, 10m, 1h, 5h, 1d)
+> "okay lets try this one , but also do one chnahge in it the time between the post also a option of 1hr and 5hr and 1 day"
+
+---
+
+## 24. Classic Printed Newspaper Front Page Masthead Styling
+> "make the website lokks like this image i pasted , if any problem then tell me if not then work [Classic Printed Newspaper Image: DAILY NEWS masthead, black category ribbon bar, issue metadata line, and grey edition date bar]"

@@ -89,9 +89,3 @@
 
 ### 21. Vercel Production Domain Assignment Directive `[DEPLOYMENT FIX]`
 > *"showing this thing [ab-talks-hackathon-project.vercel.app No Deployment screenshot]"*
-
-### 22. Comprehensive Hackathon Judge README Documentation
-> *"create a readme in the repo because it is provided in the problem statement provided for the judgement"*
-
-### 23. Active Live Production URL in README
-> *"in the readme paste the active url link too"*

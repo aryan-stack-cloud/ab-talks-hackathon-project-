@@ -9,7 +9,7 @@ export interface Topic {
   summary: string;
   publishedAt: string; // ISO date string
   source: string; // e.g. "hackernews", "arXiv", "TechCrunch", "Dark Reading", etc.
-  imageUrl?: string; // Optional article image URL extracted from source feed
+  imageUrl: string; // News featured image URL (extracted or relevant fallback)
   topicKey: string; // SHA-256 hash of title+url for dedup
 }
 
@@ -36,6 +36,28 @@ function extractText(val: unknown): string {
 
 function cleanHtmlTags(str: string): string {
   return str.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim();
+}
+
+const TECH_FEATURED_IMAGES = [
+  "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80", // Cybersecurity & Code
+  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80", // Abstract AI Neural Mesh
+  "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80", // Matrix / Binary Stream
+  "https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=1200&q=80", // AI Brain / Future Intelligence
+  "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80", // Digital Security Shield
+  "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80", // Silicon Hardware / Microchip
+];
+
+/**
+ * Returns extracted image URL or deterministically resolves a relevant high-res tech featured image.
+ */
+export function resolveTopicImageUrl(title: string, summary: string, extractedUrl?: string): string {
+  if (extractedUrl && extractedUrl.startsWith("http") && !extractedUrl.includes("1x1") && !extractedUrl.includes("pixel")) {
+    return extractedUrl;
+  }
+
+  const hash = createHash("md5").update(`${title}|${summary}`).digest("hex");
+  const num = parseInt(hash.slice(0, 4), 16);
+  return TECH_FEATURED_IMAGES[num % TECH_FEATURED_IMAGES.length];
 }
 
 /**
@@ -78,7 +100,7 @@ function extractImageUrl(item: Record<string, unknown>, rawSummary: string): str
       return imgMatch[1];
     }
   } catch {
-    // Non-fatal image parsing error
+    // Non-fatal
   }
 
   return undefined;
@@ -172,13 +194,15 @@ export async function discoverFromRSS(source: NewsFeedSource): Promise<Topic[]> 
         const rawLink = extractText(item.link || item.guid);
         const rawSummary = extractText(item.description || item["content:encoded"] || "");
         const rawDate = extractText(item.pubDate || item["dc:date"]);
-        const imageUrl = extractImageUrl(item as Record<string, unknown>, rawSummary);
+        const extractedImg = extractImageUrl(item as Record<string, unknown>, rawSummary);
 
         const title = cleanHtmlTags(rawTitle);
         const link = rawLink.trim();
         const summary = cleanHtmlTags(rawSummary).slice(0, 400);
 
         if (!title || !link || !link.startsWith("http")) continue;
+
+        const imageUrl = resolveTopicImageUrl(title, summary, extractedImg);
 
         results.push({
           title,
@@ -200,7 +224,7 @@ export async function discoverFromRSS(source: NewsFeedSource): Promise<Topic[]> 
         const rawTitle = extractText(entry.title);
         const rawSummary = extractText(entry.summary || entry.content || "");
         const rawDate = extractText(entry.published || entry.updated);
-        const imageUrl = extractImageUrl(entry as Record<string, unknown>, rawSummary);
+        const extractedImg = extractImageUrl(entry as Record<string, unknown>, rawSummary);
 
         let link = "";
         if (Array.isArray(entry.link)) {
@@ -216,6 +240,8 @@ export async function discoverFromRSS(source: NewsFeedSource): Promise<Topic[]> 
         const summary = cleanHtmlTags(rawSummary).slice(0, 400);
 
         if (!title || !link || !link.startsWith("http")) continue;
+
+        const imageUrl = resolveTopicImageUrl(title, summary, extractedImg);
 
         results.push({
           title,
@@ -304,9 +330,11 @@ export async function discoverFromWebSearch(): Promise<Topic[]> {
       const link = rawLink.trim();
       const summary = cleanHtmlTags(rawSummary).slice(0, 400);
       const sourceName = rawSource ? cleanHtmlTags(rawSource) : "Web Search";
-      const imageUrl = extractImageUrl(item as Record<string, unknown>, rawSummary);
+      const extractedImg = extractImageUrl(item as Record<string, unknown>, rawSummary);
 
       if (!title || !link || !link.startsWith("http")) continue;
+
+      const imageUrl = resolveTopicImageUrl(title, summary, extractedImg);
 
       results.push({
         title,
@@ -389,15 +417,18 @@ export async function discoverFromHN(
 
           const title = hit.title ?? "(no title)";
           const storyUrl = hit.url;
+          const summary = hit.story_text
+            ? hit.story_text.slice(0, 400)
+            : `HN story with ${hit.points} points and ${hit.num_comments} comments.`;
+          const imageUrl = resolveTopicImageUrl(title, summary);
 
           results.push({
             title,
             url: storyUrl,
-            summary: hit.story_text
-              ? hit.story_text.slice(0, 400)
-              : `HN story with ${hit.points} points and ${hit.num_comments} comments.`,
+            summary,
             publishedAt: hit.created_at,
             source: "Hacker News",
+            imageUrl,
             topicKey: topicKey(title, storyUrl),
           });
         }
@@ -482,12 +513,15 @@ export async function discoverFromArxiv(
         paperUrl = `https://arxiv.org/abs/${paperUrl}`;
       }
 
+      const imageUrl = resolveTopicImageUrl(title, summary);
+
       results.push({
         title,
         url: paperUrl,
         summary,
         publishedAt,
         source: "arXiv",
+        imageUrl,
         topicKey: topicKey(title, paperUrl),
       });
     }

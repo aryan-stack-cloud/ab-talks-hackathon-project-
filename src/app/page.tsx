@@ -21,6 +21,14 @@ interface ParsedPost {
   imageUrl?: string;
 }
 
+const CLIENT_FALLBACK_IMAGES = [
+  "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80",
+];
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string): string {
@@ -87,6 +95,17 @@ function PostCard({ post }: { post: Post }) {
   const parsed = parsePostContent(post.text);
   const primarySource = post.sources && post.sources[0] ? post.sources[0] : null;
 
+  // Fallback image selection based on post ID
+  const hashIdx = post.id
+    ? Math.abs(post.id.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0))
+    : 0;
+  const fallbackImg = CLIENT_FALLBACK_IMAGES[hashIdx % CLIENT_FALLBACK_IMAGES.length];
+  const [imgSrc, setImgSrc] = useState<string>(parsed.imageUrl || fallbackImg);
+
+  useEffect(() => {
+    setImgSrc(parsed.imageUrl || fallbackImg);
+  }, [parsed.imageUrl, fallbackImg]);
+
   const handleCopyLink = () => {
     if (primarySource) {
       navigator.clipboard.writeText(primarySource);
@@ -108,25 +127,24 @@ function PostCard({ post }: { post: Post }) {
         <span className="post-date">{formatDate(post.createdAt)}</span>
       </div>
 
-      {/* ── Bold News Headline (Top) ────────────────────────────────────── */}
+      {/* ── Bold Impact Headline (Top) ──────────────────────────────────── */}
       {parsed.headline && <h2 className="post-headline">{parsed.headline}</h2>}
 
-      {/* ── Featured Image (Directly Below Headline) ────────────────────── */}
-      {parsed.imageUrl && (
-        <div className="post-image-container">
-          <img
-            src={parsed.imageUrl}
-            alt={parsed.headline || "Article Featured Image"}
-            className="post-featured-image"
-            onError={(e) => {
-              // Hide image container on broken image link
-              (e.currentTarget.parentElement as HTMLElement).style.display = "none";
-            }}
-          />
-        </div>
-      )}
+      {/* ── Featured Image (Guaranteed for 100% of posts) ──────────────── */}
+      <div className="post-image-container">
+        <img
+          src={imgSrc}
+          alt={parsed.headline || "Article Featured Image"}
+          className="post-featured-image"
+          onError={() => {
+            if (imgSrc !== fallbackImg) {
+              setImgSrc(fallbackImg);
+            }
+          }}
+        />
+      </div>
 
-      {/* ── Article Content (Under Image) ───────────────────────────────── */}
+      {/* ── News Article Content (Under Image) ───────────────────────────────── */}
       {parsed.takeaway && (
         <div className="post-takeaway-box">
           <div className="post-takeaway-label">Executive Threat Takeaway</div>

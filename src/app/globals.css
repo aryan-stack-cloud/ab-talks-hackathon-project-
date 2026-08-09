@@ -1,42 +1,42 @@
 /* ──────────────────────────────────────────────────────────────────────────
-   Mira Voss — Classic Printed Newspaper Front Page Design
-   Inspired by classic national print newspaper mastheads
+   Mira Voss — Authentic Printed Newspaper UI/UX Design System
+   Inspired by physical front-page newsprint publications
    ────────────────────────────────────────────────────────────────────────── */
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
 
 /* ── Reset ────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Design tokens ────────────────────────────────────────────────────── */
+/* ── Design Tokens (Authentic Print Newsprint Palette) ───────────────── */
 :root {
-  --bg:           #0a0c0f;
-  --surface:      #111418;
-  --surface-2:    #181c22;
-  --border:       #1e2530;
-  --border-hover: #2a3545;
+  --bg:           #efece6;       /* Authentic newsprint off-white page background */
+  --surface:      #f7f5f0;       /* Crisp white/newsprint paper sheet surface */
+  --surface-2:    #e8e4dc;       /* Newspaper inset section grey */
+  --border:       #111111;       /* Deep dark ink borders */
+  --border-muted: #888888;
 
-  --accent:       #00d4ff;
-  --accent-dim:   #00d4ff22;
-  --accent-glow:  0 0 20px #00d4ff33;
+  --accent:       #111111;       /* Deep black headline ink */
+  --accent-blue:  #0055aa;       /* Classic newspaper link blue */
+  --accent-red:   #bb0000;       /* Breaking news red tag */
 
-  --text-primary: #e8edf5;
-  --text-secondary:#8b98b0;
-  --text-muted:   #4a5568;
+  --text-primary: #111111;       /* Solid black newsprint ink */
+  --text-secondary:#333333;       /* Charcoal body text */
+  --text-muted:   #555555;
 
-  --green:        #00ff9d;
-  --red:          #ff4b6e;
-  --yellow:       #ffd700;
+  --green:        #007733;
+  --red:          #bb0000;
 
   --font-serif:   'Playfair Display', Georgia, serif;
+  --font-body:    'Newsreader', Georgia, serif;
+  --font-mono:    'JetBrains Mono', monospace;
   --font-sans:    'Inter', system-ui, sans-serif;
-  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
 
-  --radius-sm:    4px;
-  --radius-md:    8px;
-  --radius-lg:    12px;
+  --radius-sm:    0px;
+  --radius-md:    0px;
+  --radius-lg:    0px;
 
-  --transition:   200ms ease;
+  --transition:   150ms ease;
 }
 
 /* ── Base ─────────────────────────────────────────────────────────────── */
@@ -44,43 +44,44 @@ html { font-size: 16px; scroll-behavior: smooth; }
 
 body {
   background-color: var(--bg);
+  background-image: radial-gradient(#d5cfc4 0.75px, transparent 0.75px);
+  background-size: 16px 16px;
   color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: 0.9375rem;
-  line-height: 1.6;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.65;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Layout ───────────────────────────────────────────────────────────── */
+/* ── Physical Newspaper Sheet Container ──────────────────────────────── */
 .app-shell {
-  max-width: 820px;
-  margin: 0 auto;
-  padding: 1.5rem 1.5rem 4rem;
+  max-width: 860px;
+  margin: 2rem auto;
+  padding: 2rem 2.5rem 4rem;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: 0 12px 48px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* ── Classic Printed Newspaper Front Page Masthead ────────────────────── */
+/* ── Newspaper Front Page Masthead ───────────────────────────────────── */
 .newspaper-masthead {
-  border-top: 3px solid var(--text-primary);
-  border-bottom: 2px solid var(--text-primary);
+  border-top: 4px solid var(--border);
+  border-bottom: 3px solid var(--border);
   padding: 1.25rem 0 0;
   margin-bottom: 2rem;
   text-align: center;
-  background: var(--surface);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
 }
 
 .newspaper-title {
   font-family: var(--font-serif);
-  font-size: 3.25rem;
+  font-size: 3.75rem;
   font-weight: 900;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   text-transform: uppercase;
   color: var(--text-primary);
-  line-height: 1.05;
-  margin-bottom: 0.875rem;
-  padding: 0 1rem;
+  line-height: 1.0;
+  margin-bottom: 0.75rem;
 }
 
 /* Black Inverted Category Ribbon Bar */
@@ -90,12 +91,12 @@ body {
   font-family: var(--font-serif);
   font-size: 0.875rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   padding: 0.5rem 1rem;
   text-transform: uppercase;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  word-spacing: 0.1em;
+  border-top: 2px solid #000;
+  border-bottom: 2px solid #000;
+  word-spacing: 0.15em;
 }
 
 /* Issue Metadata Row */
@@ -105,18 +106,18 @@ body {
   justify-content: space-between;
   padding: 0.5rem 1rem;
   font-family: var(--font-sans);
-  font-size: 0.725rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-primary);
-  border-bottom: 2px solid var(--text-primary);
+  border-bottom: 2px solid var(--border);
   gap: 0.5rem;
   flex-wrap: wrap;
 }
 
 .newspaper-tagline {
-  color: var(--accent);
+  color: var(--text-primary);
   font-weight: 800;
 }
 
@@ -128,9 +129,9 @@ body {
   justify-content: space-between;
   padding: 0.4rem 1rem;
   font-family: var(--font-mono);
-  font-size: 0.725rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   border-bottom: 1px solid var(--border);
   gap: 0.5rem;
   flex-wrap: wrap;
@@ -138,29 +139,24 @@ body {
 
 .newspaper-edition-left {
   color: var(--text-primary);
+  font-weight: 700;
 }
 
 .newspaper-edition-right {
   color: var(--green);
+  font-weight: 700;
 }
 
 .cipher-badge {
   font-family: var(--font-mono);
   font-size: 0.7rem;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--accent);
-  background: var(--accent-dim);
-  border: 1px solid var(--accent)44;
-  border-radius: var(--radius-sm);
+  color: #000;
+  background: #e0e0e0;
+  border: 1px solid #000;
   padding: 0.2rem 0.6rem;
-  animation: pulse-border 3s ease-in-out infinite;
-}
-
-@keyframes pulse-border {
-  0%, 100% { border-color: var(--accent)44; }
-  50%       { border-color: var(--accent)99; }
 }
 
 .status-line {
@@ -174,40 +170,37 @@ body {
 }
 
 .status-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--green);
-  box-shadow: 0 0 6px var(--green);
-  animation: blink 2s ease-in-out infinite;
+  box-shadow: 0 0 4px var(--green);
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.3; }
-}
-
-/* ── Init panel ────────────────────────────────────────────────────────── */
+/* ── Control Desk Panels (Printed Box Style) ─────────────────────────── */
 .init-panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1.75rem;
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  padding: 1.5rem;
   margin-bottom: 1.5rem;
 }
 
 .init-panel h2 {
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.25rem;
 }
 
 .init-description {
+  font-family: var(--font-sans);
   font-size: 0.8125rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 
@@ -226,19 +219,19 @@ body {
   display: block;
   font-size: 0.75rem;
   font-family: var(--font-mono);
-  color: var(--text-muted);
+  color: var(--text-primary);
   margin-bottom: 0.375rem;
   letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
 .btn-primary {
-  background: var(--accent);
-  color: #000;
-  border: none;
-  border-radius: var(--radius-md);
+  background: #000;
+  color: #fff;
+  border: 2px solid #000;
   font-family: var(--font-mono);
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.05em;
   padding: 0.625rem 1.25rem;
   cursor: pointer;
@@ -247,8 +240,8 @@ body {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #33deff;
-  box-shadow: var(--accent-glow);
+  background: #222;
+  color: var(--green);
 }
 
 .btn-primary:disabled {
@@ -259,18 +252,18 @@ body {
 .init-result {
   margin-top: 1rem;
   padding: 0.75rem 1rem;
-  background: var(--surface-2);
+  background: #fff;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
   font-family: var(--font-mono);
   font-size: 0.8125rem;
   color: var(--green);
   word-break: break-all;
+  font-weight: 600;
 }
 
 .init-result.error { color: var(--red); }
 
-/* ── Agent lookup ─────────────────────────────────────────────────────── */
+/* ── Agent Lookup ─────────────────────────────────────────────────────── */
 .lookup-bar {
   display: flex;
   gap: 0.75rem;
@@ -279,30 +272,22 @@ body {
 
 .lookup-bar input {
   flex: 1;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  background: #fff;
+  border: 2px solid var(--border);
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: 0.8125rem;
   padding: 0.625rem 0.875rem;
   outline: none;
-  transition: border-color var(--transition);
 }
-
-.lookup-bar input:focus {
-  border-color: var(--accent)66;
-}
-
-.lookup-bar input::placeholder { color: var(--text-muted); }
 
 .btn-secondary {
-  background: var(--surface-2);
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  background: #fff;
+  color: var(--text-primary);
+  border: 2px solid var(--border);
   font-family: var(--font-mono);
   font-size: 0.8125rem;
+  font-weight: 600;
   padding: 0.625rem 1rem;
   cursor: pointer;
   transition: all var(--transition);
@@ -310,90 +295,80 @@ body {
 }
 
 .btn-secondary:hover:not(:disabled) {
-  border-color: var(--border-hover);
-  color: var(--text-primary);
+  background: #000;
+  color: #fff;
 }
 
 .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── News Publication Cards ───────────────────────────────────────────── */
+/* ── Printed Newspaper Article Cards ─────────────────────────────────── */
 .feed-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0.5rem;
 }
 
 .feed-title {
-  font-size: 0.75rem;
-  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-family: var(--font-serif);
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-primary);
 }
 
 .feed-count {
   font-size: 0.75rem;
   font-family: var(--font-mono);
-  color: var(--accent);
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 .post-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1.75rem;
-  margin-bottom: 2rem;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  background: #fff;
+  border: 2px solid var(--border);
+  padding: 2rem;
+  margin-bottom: 2.5rem;
+  box-shadow: 4px 4px 0px #111;
+  transition: transform var(--transition);
   position: relative;
 }
 
-.post-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent), var(--green), transparent);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  opacity: 0;
-  transition: opacity var(--transition);
-}
-
 .post-card:hover {
-  border-color: var(--border-hover);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px #111;
 }
-
-.post-card:hover::before { opacity: 1; }
 
 .post-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-muted);
+  padding-bottom: 0.5rem;
 }
 
 .post-author {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--accent);
+  font-weight: 700;
+  color: var(--text-primary);
   letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .source-badge {
   font-family: var(--font-mono);
   font-size: 0.65rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent);
-  background: var(--accent-dim);
-  border: 1px solid var(--accent)33;
-  border-radius: var(--radius-sm);
+  color: #fff;
+  background: #000;
   padding: 0.15rem 0.5rem;
 }
 
@@ -401,27 +376,27 @@ body {
   font-family: var(--font-mono);
   font-size: 0.7rem;
   color: var(--text-muted);
+  font-weight: 500;
 }
 
-/* ── Newspaper Impact Headline ────────────────────────────────────────── */
+/* Newspaper Impact Headline */
 .post-headline {
   font-family: var(--font-serif);
-  font-size: 1.75rem;
+  font-size: 1.875rem;
   font-weight: 900;
-  line-height: 1.2;
+  line-height: 1.18;
   letter-spacing: -0.01em;
   text-transform: uppercase;
   color: var(--text-primary);
   margin-bottom: 1.25rem;
 }
 
-/* ── Article Featured Image (Directly Under Headline) ─────────────────── */
+/* Article Featured Image */
 .post-image-container {
   width: 100%;
-  max-height: 420px;
+  max-height: 440px;
   overflow: hidden;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   margin-bottom: 1.5rem;
   background: var(--surface-2);
 }
@@ -429,23 +404,19 @@ body {
 .post-featured-image {
   width: 100%;
   height: 100%;
-  max-height: 420px;
+  max-height: 440px;
   object-fit: cover;
   display: block;
-  transition: transform var(--transition);
 }
 
-.post-card:hover .post-featured-image {
-  transform: scale(1.01);
-}
-
-/* ── News Article Content (Under Image) ───────────────────────────────── */
+/* Executive Threat Takeaway Quote Box */
 .post-takeaway-box {
-  background: linear-gradient(135deg, rgba(0, 212, 255, 0.06), rgba(0, 255, 157, 0.03));
-  border-left: 3px solid var(--accent);
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
-  padding: 0.875rem 1.125rem;
+  background: var(--surface-2);
+  border-left: 4px solid #000;
+  padding: 1rem 1.25rem;
   margin-bottom: 1.25rem;
+  border-top: 1px solid var(--border-muted);
+  border-bottom: 1px solid var(--border-muted);
 }
 
 .post-takeaway-label {
@@ -453,14 +424,15 @@ body {
   font-family: var(--font-mono);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--text-primary);
   margin-bottom: 0.35rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .post-takeaway-text {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--text-primary);
   line-height: 1.5;
 }
@@ -478,23 +450,26 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 0.625rem;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  line-height: 1.55;
+  font-family: var(--font-body);
 }
 
 .bullet-icon {
-  color: var(--green);
+  color: #000;
   font-size: 0.75rem;
-  margin-top: 0.2rem;
+  margin-top: 0.25rem;
   flex-shrink: 0;
 }
 
 .post-body p {
-  font-size: 0.9375rem;
+  font-family: var(--font-body);
+  font-size: 1rem;
   line-height: 1.7;
   color: var(--text-primary);
-  margin-bottom: 1rem;
+  margin-bottom: 1.125rem;
+  text-align: justify;
 }
 
 .post-body p:last-child {
@@ -503,8 +478,7 @@ body {
 
 .post-rationale {
   background: var(--surface-2);
-  border-left: 2px solid var(--accent)44;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-left: 3px solid var(--border);
   padding: 0.75rem 1rem;
   margin-top: 1rem;
   margin-bottom: 1.25rem;
@@ -517,12 +491,14 @@ body {
   text-transform: uppercase;
   color: var(--text-muted);
   margin-bottom: 0.25rem;
+  font-weight: 600;
 }
 
 .post-rationale-text {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   color: var(--text-secondary);
   line-height: 1.5;
+  font-family: var(--font-body);
 }
 
 .post-footer {
@@ -532,7 +508,7 @@ body {
   gap: 1rem;
   margin-top: 1.25rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--border);
+  border-top: 2px solid var(--border);
   flex-wrap: wrap;
 }
 
@@ -542,36 +518,35 @@ body {
   gap: 0.375rem;
   font-size: 0.75rem;
   font-family: var(--font-mono);
-  font-weight: 600;
-  color: var(--bg);
-  background: var(--text-primary);
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 0.375rem 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  background: #000;
+  border: 2px solid #000;
+  padding: 0.375rem 0.875rem;
   text-decoration: none;
   transition: all var(--transition);
 }
 
 .source-link-btn:hover {
-  background: var(--accent);
-  box-shadow: 0 0 12px var(--accent-dim);
+  background: #fff;
+  color: #000;
 }
 
 .copy-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
+  background: #fff;
+  border: 2px solid var(--border);
+  color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  padding: 0.375rem 0.75rem;
+  font-weight: 600;
+  padding: 0.375rem 0.875rem;
   cursor: pointer;
   transition: all var(--transition);
 }
 
 .copy-btn:hover {
-  border-color: var(--accent)66;
-  color: var(--accent);
+  background: #000;
+  color: #fff;
 }
 
 /* ── Empty states ─────────────────────────────────────────────────────── */
@@ -598,8 +573,8 @@ body {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid var(--border);
-  border-top-color: var(--accent);
+  border: 2px solid #ccc;
+  border-top-color: #000;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -608,36 +583,21 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* ── Scanline overlay ─────────────────────────────────────────────────── */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 212, 255, 0.015) 2px,
-    rgba(0, 212, 255, 0.015) 4px
-  );
-  z-index: 9999;
-}
-
 /* ── Scrollbar ────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+::-webkit-scrollbar-thumb { background: #bbb; }
+::-webkit-scrollbar-thumb:hover { background: #888; }
 
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
+  .app-shell { padding: 1.25rem 1rem 3rem; margin: 0 auto; }
   .form-row { flex-direction: column; }
   .btn-primary { align-self: stretch; text-align: center; }
   .lookup-bar { flex-direction: column; }
   .post-footer { flex-direction: column; align-items: stretch; }
   .post-headline { font-size: 1.35rem; }
-  .newspaper-title { font-size: 2.2rem; }
+  .newspaper-title { font-size: 2.25rem; }
   .newspaper-issue-row { flex-direction: column; text-align: center; }
   .newspaper-edition-bar { flex-direction: column; text-align: center; }
 }

@@ -89,3 +89,6 @@
 
 ### 21. Vercel Production Domain Assignment Directive `[DEPLOYMENT FIX]`
 > *"showing this thing [ab-talks-hackathon-project.vercel.app No Deployment screenshot]"*
+
+### 22. Final Project Verification & Hackathon Evaluation Test Run
+> *"Now run a final test run of the project using repo link and live url link on judgment rules provided in  the problem statement given"*

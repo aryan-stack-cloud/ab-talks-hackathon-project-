@@ -226,7 +226,7 @@ function PostCard({ post }: { post: Post }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  // Live UTC Clock State for Publication Masthead
+  // Live UTC Clock State
   const [utcTime, setUtcTime] = useState<string>("");
 
   useEffect(() => {
@@ -425,40 +425,37 @@ export default function Home() {
   // Current dateline string
   const datelineStr = new Date().toLocaleDateString("en-US", {
     weekday: "long",
-    month: "long",
     day: "numeric",
+    month: "long",
     year: "numeric",
-  }).toUpperCase();
+  });
 
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="app-shell">
-      {/* ── Newspaper Top Utility Bar ────────────────────────────────────── */}
-      <div className="masthead-top-bar">
-        <span className="masthead-dateline">{datelineStr}</span>
-        <span className="masthead-edition">GLOBAL EDITION · VOL. XXIV · NO. 88</span>
-        <span className="masthead-clock">{utcTime || "UTC CLOCK"}</span>
-      </div>
+      {/* ── Classic Printed Newspaper Front Page Masthead ────────────────── */}
+      <header className="newspaper-masthead">
+        {/* Gigantic Newspaper Title */}
+        <h1 className="newspaper-title">DAILY NEWS</h1>
 
-      {/* ── Publication Masthead Header ───────────────────────────────────── */}
-      <header className="site-header masthead-header">
-        <div className="header-top">
-          <span className="cipher-badge">Autonomous News Publication</span>
+        {/* Black Inverted Category Ribbon Bar */}
+        <div className="newspaper-category-ribbon">
+          World - AI Security - Vulnerabilities - ArXiv Research - Hardware - Cyber
         </div>
-        <h1 className="site-title masthead-title">
-          <span>THE MIRA VOSS DISPATCH</span>
-        </h1>
-        <p className="site-subtitle masthead-subtitle">
-          Autonomous AI Security Research & Threat Intelligence Feed · Powered by Gemini
-        </p>
-        <div className="status-line masthead-status">
-          <span className="status-dot" />
-          <span>
-            LIVE · Scanning 45+ Premier Outlets · Post Interval: Every ~{formatIntervalLabel(intervalMinutes)}
-          </span>
+
+        {/* Issue Metadata Row */}
+        <div className="newspaper-issue-row">
+          <span>Issue: #240104</span>
+          <span className="newspaper-tagline">THE WORLD'S PREMIER AUTONOMOUS AI SECURITY NEWSPAPER</span>
+          <span>Est - 2026</span>
         </div>
-        <div className="masthead-double-rule" style={{ marginTop: "1.25rem", marginBottom: "0" }} />
+
+        {/* Grey Edition Bar */}
+        <div className="newspaper-edition-bar">
+          <span className="newspaper-edition-left">First Edition</span>
+          <span className="newspaper-edition-right">{datelineStr} · {utcTime || "15:50:00 UTC"}</span>
+        </div>
       </header>
 
       {/* ── Init panel ──────────────────────────────────────────────────── */}

@@ -1,9 +1,9 @@
 /* ──────────────────────────────────────────────────────────────────────────
-   Mira Voss — AI Security Research Feed
-   Design: Modern newspaper/publication layout with bold impact headline & featured image
+   Mira Voss — Classic Printed Newspaper Front Page Design
+   Inspired by classic national print newspaper mastheads
    ────────────────────────────────────────────────────────────────────────── */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* ── Reset ────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -28,6 +28,7 @@
   --red:          #ff4b6e;
   --yellow:       #ffd700;
 
+  --font-serif:   'Playfair Display', Georgia, serif;
   --font-sans:    'Inter', system-ui, sans-serif;
   --font-mono:    'JetBrains Mono', 'Courier New', monospace;
 
@@ -53,80 +54,94 @@ body {
 
 /* ── Layout ───────────────────────────────────────────────────────────── */
 .app-shell {
-  max-width: 780px;
+  max-width: 820px;
   margin: 0 auto;
-  padding: 0 1.5rem 3rem;
+  padding: 1.5rem 1.5rem 4rem;
 }
 
-/* ── Publication Masthead & Top Edition Bar ──────────────────────────── */
-.masthead-top-bar {
+/* ── Classic Printed Newspaper Front Page Masthead ────────────────────── */
+.newspaper-masthead {
+  border-top: 3px solid var(--text-primary);
+  border-bottom: 2px solid var(--text-primary);
+  padding: 1.25rem 0 0;
+  margin-bottom: 2rem;
+  text-align: center;
+  background: var(--surface);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.newspaper-title {
+  font-family: var(--font-serif);
+  font-size: 3.25rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  line-height: 1.05;
+  margin-bottom: 0.875rem;
+  padding: 0 1rem;
+}
+
+/* Black Inverted Category Ribbon Bar */
+.newspaper-category-ribbon {
+  background: #000;
+  color: #fff;
+  font-family: var(--font-serif);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 1rem;
+  text-transform: uppercase;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  word-spacing: 0.1em;
+}
+
+/* Issue Metadata Row */
+.newspaper-issue-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  padding: 0.5rem 1rem;
+  font-family: var(--font-sans);
+  font-size: 0.725rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--text-primary);
   gap: 0.5rem;
   flex-wrap: wrap;
 }
 
-.masthead-dateline {
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.masthead-edition {
+.newspaper-tagline {
   color: var(--accent);
+  font-weight: 800;
+}
+
+/* Grey Edition Bar */
+.newspaper-edition-bar {
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.725rem;
   font-weight: 600;
-}
-
-.masthead-clock {
-  color: var(--green);
-  font-weight: 600;
-}
-
-.masthead-header {
-  padding: 1.75rem 0 1.5rem;
-  text-align: center;
-  border-bottom: none;
-  margin-bottom: 2rem;
-}
-
-.masthead-header .header-top {
-  justify-content: center;
-}
-
-.masthead-title {
-  font-size: 2.25rem;
-  font-weight: 900;
-  letter-spacing: -0.03em;
-  text-transform: uppercase;
-  margin-top: 0.5rem;
-  line-height: 1.15;
-}
-
-.masthead-subtitle {
-  font-size: 0.875rem;
   color: var(--text-secondary);
-  margin-top: 0.35rem;
-  font-weight: 400;
+  border-bottom: 1px solid var(--border);
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.masthead-status {
-  justify-content: center;
-  margin-top: 0.875rem;
+.newspaper-edition-left {
+  color: var(--text-primary);
 }
 
-.masthead-double-rule {
-  height: 3px;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--accent)66;
-  width: 100%;
-  margin-bottom: 1rem;
+.newspaper-edition-right {
+  color: var(--green);
 }
 
 .cipher-badge {
@@ -390,10 +405,11 @@ body {
 
 /* ── Newspaper Impact Headline ────────────────────────────────────────── */
 .post-headline {
-  font-size: 1.5rem;
-  font-weight: 800;
-  line-height: 1.25;
-  letter-spacing: -0.025em;
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   text-transform: uppercase;
   color: var(--text-primary);
   margin-bottom: 1.25rem;
@@ -620,7 +636,8 @@ body::after {
   .btn-primary { align-self: stretch; text-align: center; }
   .lookup-bar { flex-direction: column; }
   .post-footer { flex-direction: column; align-items: stretch; }
-  .post-headline { font-size: 1.25rem; }
-  .masthead-title { font-size: 1.6rem; }
-  .masthead-top-bar { flex-direction: column; text-align: center; }
+  .post-headline { font-size: 1.35rem; }
+  .newspaper-title { font-size: 2.2rem; }
+  .newspaper-issue-row { flex-direction: column; text-align: center; }
+  .newspaper-edition-bar { flex-direction: column; text-align: center; }
 }

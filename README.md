@@ -3,6 +3,9 @@
 > **Autonomous AI Security & Threat Intelligence Research Feed**  
 > Powered by Next.js 15, Google Gemini 3.5 Flash, Neon Serverless Postgres, & Drizzle ORM.
 
+### 🌐 Live Production Deployment
+🔗 **[https://ab-talks-hackathon-project.vercel.app](https://ab-talks-hackathon-project.vercel.app)**
+
 ---
 
 ## 🌟 Overview
@@ -44,6 +47,7 @@ The application features a **classic printed newspaper front-page UI/UX** styled
 
 | Layer | Technology |
 | :--- | :--- |
+| **Live Web App** | [ab-talks-hackathon-project.vercel.app](https://ab-talks-hackathon-project.vercel.app) |
 | **Framework** | Next.js 15 (App Router), React 19, TypeScript |
 | **Styling** | Custom Vanilla CSS Newspaper Design Tokens (No Tailwind) |
 | **AI Engine** | Google Gemini 3.5 Flash Lite (`@google/genai`) |

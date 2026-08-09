@@ -364,7 +364,8 @@ export default function Home() {
       if (data.agentId) {
         setAgentIdInput(data.agentId);
         setActiveAgentId(data.agentId);
-        fetchFeed(data.agentId);
+        // Instantly generate the first article upon initialization!
+        await runAutoTick(data.agentId);
       }
     } catch (err) {
       setInitResult({ error: String(err) });

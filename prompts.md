@@ -72,3 +72,18 @@ This document records all user instructions, directives, and feature requests pr
 
 ## 14. Prompts History Log File
 > "also create a promts.md file in which all the promots i gave you from start should be stored in it and also push it to github to and all the promyts i will give also stored there"
+
+---
+
+## 15. Repository Credentials Inquiry
+> "do not change in any code , why the env local file is not present in github repo"
+
+---
+
+## 16. Multi-User Access Strategy
+> "then how will the app wil work if others can not acces it (no change in code )"
+
+---
+
+## 17. Shared Credential & Vercel Deployment Selection
+> "what i want is they will also use the same api key as mine all other things from the env local , can we push it to github"

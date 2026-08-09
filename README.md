@@ -103,8 +103,8 @@ Create `.env.local` in the root directory:
 ```env
 GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-3.5-flash-lite
-DATABASE_URL=postgresql://neondb_owner:npg_5hdwvSnWJ6rU@ep-withered-thunder-axn3yo1w-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-CRON_SECRET=58AE386F6109BDBC49A8B00D40134549B0A11A20AF0D7D93842995B30C667716
+DATABASE_URL=postgresql://database_password.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+CRON_SECRET= cron_secret
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
